@@ -1,0 +1,28 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+const releases = [] as any[];
+---
+
+<Layout>
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <h1 class="text-3xl font-bold tracking-tight">Releases</h1>
+      <a
+        href="/releases/new"
+        class="px-4 py-2 bg-neutral-900 text-white text-sm rounded-lg hover:bg-neutral-800 transition-colors"
+      >
+        + New Release
+      </a>
+    </div>
+
+    {releases.length === 0 && (
+      <div class="p-12 text-center text-neutral-400 border-2 border-dashed border-neutral-200 rounded-xl">
+        <p class="text-lg">No releases yet.</p>
+        <p class="text-sm mt-2">
+          Create your first release to start tracking readiness, clearance, and ISRCs.
+        </p>
+      </div>
+    )}
+  </div>
+</Layout>
