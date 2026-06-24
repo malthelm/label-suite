@@ -1,4 +1,4 @@
-CREATE TABLE "artists" (
+CREATE TABLE "label_suite"."artists" (
 	"id" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"bio" text,
@@ -14,13 +14,13 @@ CREATE TABLE "artists" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "budget_categories" (
+CREATE TABLE "label_suite"."budget_categories" (
 	"id" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"type" text
 );
 --> statement-breakpoint
-CREATE TABLE "budget_line_items" (
+CREATE TABLE "label_suite"."budget_line_items" (
 	"id" text PRIMARY KEY NOT NULL,
 	"release_id" text,
 	"category_id" text,
@@ -30,7 +30,7 @@ CREATE TABLE "budget_line_items" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "bugs" (
+CREATE TABLE "label_suite"."bugs" (
 	"id" text PRIMARY KEY NOT NULL,
 	"bug_key" text,
 	"source_table" text,
@@ -45,7 +45,7 @@ CREATE TABLE "bugs" (
 	CONSTRAINT "bugs_bug_key_unique" UNIQUE("bug_key")
 );
 --> statement-breakpoint
-CREATE TABLE "calls" (
+CREATE TABLE "label_suite"."calls" (
 	"id" text PRIMARY KEY NOT NULL,
 	"title" text NOT NULL,
 	"contact_id" text,
@@ -56,7 +56,7 @@ CREATE TABLE "calls" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "contacts" (
+CREATE TABLE "label_suite"."contacts" (
 	"id" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"email" text,
@@ -68,7 +68,7 @@ CREATE TABLE "contacts" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "dsp_pitches" (
+CREATE TABLE "label_suite"."dsp_pitches" (
 	"id" text PRIMARY KEY NOT NULL,
 	"release_id" text,
 	"platform" text,
@@ -78,7 +78,7 @@ CREATE TABLE "dsp_pitches" (
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "isrc_sequences" (
+CREATE TABLE "label_suite"."isrc_sequences" (
 	"id" text PRIMARY KEY NOT NULL,
 	"year" integer NOT NULL,
 	"last_production_number" integer DEFAULT 0,
@@ -86,7 +86,7 @@ CREATE TABLE "isrc_sequences" (
 	CONSTRAINT "isrc_sequences_year_unique" UNIQUE("year")
 );
 --> statement-breakpoint
-CREATE TABLE "releases" (
+CREATE TABLE "label_suite"."releases" (
 	"id" text PRIMARY KEY NOT NULL,
 	"title" text NOT NULL,
 	"artist_id" text,
@@ -104,7 +104,7 @@ CREATE TABLE "releases" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "roles" (
+CREATE TABLE "label_suite"."roles" (
 	"id" text PRIMARY KEY NOT NULL,
 	"contact_id" text,
 	"work_id" text,
@@ -118,7 +118,7 @@ CREATE TABLE "roles" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "tracks" (
+CREATE TABLE "label_suite"."tracks" (
 	"id" text PRIMARY KEY NOT NULL,
 	"title" text NOT NULL,
 	"release_id" text,
@@ -135,7 +135,7 @@ CREATE TABLE "tracks" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "works" (
+CREATE TABLE "label_suite"."works" (
 	"id" text PRIMARY KEY NOT NULL,
 	"title" text NOT NULL,
 	"isrc" text,
@@ -147,14 +147,14 @@ CREATE TABLE "works" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-ALTER TABLE "artists" ADD CONSTRAINT "artists_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "budget_line_items" ADD CONSTRAINT "budget_line_items_release_id_releases_id_fk" FOREIGN KEY ("release_id") REFERENCES "public"."releases"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "budget_line_items" ADD CONSTRAINT "budget_line_items_category_id_budget_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."budget_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "calls" ADD CONSTRAINT "calls_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "calls" ADD CONSTRAINT "calls_release_id_releases_id_fk" FOREIGN KEY ("release_id") REFERENCES "public"."releases"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "dsp_pitches" ADD CONSTRAINT "dsp_pitches_release_id_releases_id_fk" FOREIGN KEY ("release_id") REFERENCES "public"."releases"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "releases" ADD CONSTRAINT "releases_artist_id_artists_id_fk" FOREIGN KEY ("artist_id") REFERENCES "public"."artists"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "roles" ADD CONSTRAINT "roles_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "public"."contacts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "roles" ADD CONSTRAINT "roles_work_id_works_id_fk" FOREIGN KEY ("work_id") REFERENCES "public"."works"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "tracks" ADD CONSTRAINT "tracks_release_id_releases_id_fk" FOREIGN KEY ("release_id") REFERENCES "public"."releases"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "tracks" ADD CONSTRAINT "tracks_work_id_works_id_fk" FOREIGN KEY ("work_id") REFERENCES "public"."works"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "label_suite"."artists" ADD CONSTRAINT "artists_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "label_suite"."contacts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "label_suite"."budget_line_items" ADD CONSTRAINT "budget_line_items_release_id_releases_id_fk" FOREIGN KEY ("release_id") REFERENCES "label_suite"."releases"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "label_suite"."budget_line_items" ADD CONSTRAINT "budget_line_items_category_id_budget_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "label_suite"."budget_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "label_suite"."calls" ADD CONSTRAINT "calls_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "label_suite"."contacts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "label_suite"."calls" ADD CONSTRAINT "calls_release_id_releases_id_fk" FOREIGN KEY ("release_id") REFERENCES "label_suite"."releases"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "label_suite"."dsp_pitches" ADD CONSTRAINT "dsp_pitches_release_id_releases_id_fk" FOREIGN KEY ("release_id") REFERENCES "label_suite"."releases"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "label_suite"."releases" ADD CONSTRAINT "releases_artist_id_artists_id_fk" FOREIGN KEY ("artist_id") REFERENCES "label_suite"."artists"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "label_suite"."roles" ADD CONSTRAINT "roles_contact_id_contacts_id_fk" FOREIGN KEY ("contact_id") REFERENCES "label_suite"."contacts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "label_suite"."roles" ADD CONSTRAINT "roles_work_id_works_id_fk" FOREIGN KEY ("work_id") REFERENCES "label_suite"."works"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "label_suite"."tracks" ADD CONSTRAINT "tracks_release_id_releases_id_fk" FOREIGN KEY ("release_id") REFERENCES "label_suite"."releases"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "label_suite"."tracks" ADD CONSTRAINT "tracks_work_id_works_id_fk" FOREIGN KEY ("work_id") REFERENCES "label_suite"."works"("id") ON DELETE no action ON UPDATE no action;

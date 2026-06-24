@@ -1,7 +1,10 @@
-import { pgTable, text, integer, real, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, timestamp, boolean, jsonb, pgSchema } from "drizzle-orm/pg-core";
+
+// All tables in label_suite schema (keeps separation from techrider's public schema)
+const schema = pgSchema("label_suite");
 
 // ─── Contacts ───────────────────────────────────────────
-export const contacts = pgTable("contacts", {
+export const contacts = schema.table("contacts", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email"),
@@ -14,7 +17,7 @@ export const contacts = pgTable("contacts", {
 });
 
 // ─── Artists ────────────────────────────────────────────
-export const artists = pgTable("artists", {
+export const artists = schema.table("artists", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   bio: text("bio"),
@@ -31,7 +34,7 @@ export const artists = pgTable("artists", {
 });
 
 // ─── Releases ───────────────────────────────────────────
-export const releases = pgTable("releases", {
+export const releases = schema.table("releases", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   artist_id: text("artist_id").references(() => artists.id),
@@ -51,7 +54,7 @@ export const releases = pgTable("releases", {
 });
 
 // ─── WORKS (stable recording identity) ──────────────────
-export const works = pgTable("works", {
+export const works = schema.table("works", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   isrc: text("isrc"),
@@ -64,7 +67,7 @@ export const works = pgTable("works", {
 });
 
 // ─── Tracks ─────────────────────────────────────────────
-export const tracks = pgTable("tracks", {
+export const tracks = schema.table("tracks", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   release_id: text("release_id").references(() => releases.id),
@@ -83,7 +86,7 @@ export const tracks = pgTable("tracks", {
 });
 
 // ─── Roles (Credit) ─────────────────────────────────────
-export const roles = pgTable("roles", {
+export const roles = schema.table("roles", {
   id: text("id").primaryKey(),
   contact_id: text("contact_id").references(() => contacts.id),
   work_id: text("work_id").references(() => works.id),
@@ -98,13 +101,13 @@ export const roles = pgTable("roles", {
 });
 
 // ─── Budget ─────────────────────────────────────────────
-export const budget_categories = pgTable("budget_categories", {
+export const budget_categories = schema.table("budget_categories", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   type: text("type"), // marketing, a_and_r, manufacturing, etc.
 });
 
-export const budget_line_items = pgTable("budget_line_items", {
+export const budget_line_items = schema.table("budget_line_items", {
   id: text("id").primaryKey(),
   release_id: text("release_id").references(() => releases.id),
   category_id: text("category_id").references(() => budget_categories.id),
@@ -115,7 +118,7 @@ export const budget_line_items = pgTable("budget_line_items", {
 });
 
 // ─── Calls (Today Hub) ──────────────────────────────────
-export const calls = pgTable("calls", {
+export const calls = schema.table("calls", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   contact_id: text("contact_id").references(() => contacts.id),
@@ -127,7 +130,7 @@ export const calls = pgTable("calls", {
 });
 
 // ─── DSP Pitches ────────────────────────────────────────
-export const dsp_pitches = pgTable("dsp_pitches", {
+export const dsp_pitches = schema.table("dsp_pitches", {
   id: text("id").primaryKey(),
   release_id: text("release_id").references(() => releases.id),
   platform: text("platform"), // Spotify, Apple Music, etc.
@@ -138,7 +141,7 @@ export const dsp_pitches = pgTable("dsp_pitches", {
 });
 
 // ─── Bugs (Auto-validation) ─────────────────────────────
-export const bugs = pgTable("bugs", {
+export const bugs = schema.table("bugs", {
   id: text("id").primaryKey(),
   bug_key: text("bug_key").unique(), // canonical dedup key
   source_table: text("source_table"),
@@ -153,7 +156,7 @@ export const bugs = pgTable("bugs", {
 });
 
 // ─── ISRC Sequences ─────────────────────────────────────
-export const isrc_sequences = pgTable("isrc_sequences", {
+export const isrc_sequences = schema.table("isrc_sequences", {
   id: text("id").primaryKey(),
   year: integer("year").notNull().unique(),
   last_production_number: integer("last_production_number").default(0),

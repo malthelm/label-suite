@@ -1,12 +1,12 @@
 {
-  "id": "3b5585a2-8409-41f0-8803-947baf7f4cdc",
+  "id": "f1c27734-214d-476c-a555-9a6b2ac450ec",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.artists": {
+    "label_suite.artists": {
       "name": "artists",
-      "schema": "",
+      "schema": "label_suite",
       "columns": {
         "id": {
           "name": "id",
@@ -95,6 +95,7 @@
           "name": "artists_contact_id_contacts_id_fk",
           "tableFrom": "artists",
           "tableTo": "contacts",
+          "schemaTo": "label_suite",
           "columnsFrom": [
             "contact_id"
           ],
@@ -111,9 +112,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.budget_categories": {
+    "label_suite.budget_categories": {
       "name": "budget_categories",
-      "schema": "",
+      "schema": "label_suite",
       "columns": {
         "id": {
           "name": "id",
@@ -142,9 +143,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.budget_line_items": {
+    "label_suite.budget_line_items": {
       "name": "budget_line_items",
-      "schema": "",
+      "schema": "label_suite",
       "columns": {
         "id": {
           "name": "id",
@@ -197,6 +198,7 @@
           "name": "budget_line_items_release_id_releases_id_fk",
           "tableFrom": "budget_line_items",
           "tableTo": "releases",
+          "schemaTo": "label_suite",
           "columnsFrom": [
             "release_id"
           ],
@@ -210,6 +212,7 @@
           "name": "budget_line_items_category_id_budget_categories_id_fk",
           "tableFrom": "budget_line_items",
           "tableTo": "budget_categories",
+          "schemaTo": "label_suite",
           "columnsFrom": [
             "category_id"
           ],
@@ -226,9 +229,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.bugs": {
+    "label_suite.bugs": {
       "name": "bugs",
-      "schema": "",
+      "schema": "label_suite",
       "columns": {
         "id": {
           "name": "id",
@@ -318,9 +321,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.calls": {
+    "label_suite.calls": {
       "name": "calls",
-      "schema": "",
+      "schema": "label_suite",
       "columns": {
         "id": {
           "name": "id",
@@ -378,6 +381,7 @@
           "name": "calls_contact_id_contacts_id_fk",
           "tableFrom": "calls",
           "tableTo": "contacts",
+          "schemaTo": "label_suite",
           "columnsFrom": [
             "contact_id"
           ],
@@ -391,6 +395,7 @@
           "name": "calls_release_id_releases_id_fk",
           "tableFrom": "calls",
           "tableTo": "releases",
+          "schemaTo": "label_suite",
           "columnsFrom": [
             "release_id"
           ],
@@ -407,9 +412,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.contacts": {
+    "label_suite.contacts": {
       "name": "contacts",
-      "schema": "",
+      "schema": "label_suite",
       "columns": {
         "id": {
           "name": "id",
@@ -476,9 +481,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.dsp_pitches": {
+    "label_suite.dsp_pitches": {
       "name": "dsp_pitches",
-      "schema": "",
+      "schema": "label_suite",
       "columns": {
         "id": {
           "name": "id",
@@ -531,6 +536,7 @@
           "name": "dsp_pitches_release_id_releases_id_fk",
           "tableFrom": "dsp_pitches",
           "tableTo": "releases",
+          "schemaTo": "label_suite",
           "columnsFrom": [
             "release_id"
           ],
@@ -547,9 +553,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.isrc_sequences": {
+    "label_suite.isrc_sequences": {
       "name": "isrc_sequences",
-      "schema": "",
+      "schema": "label_suite",
       "columns": {
         "id": {
           "name": "id",
@@ -594,9 +600,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.releases": {
+    "label_suite.releases": {
       "name": "releases",
-      "schema": "",
+      "schema": "label_suite",
       "columns": {
         "id": {
           "name": "id",
@@ -699,6 +705,7 @@
           "name": "releases_artist_id_artists_id_fk",
           "tableFrom": "releases",
           "tableTo": "artists",
+          "schemaTo": "label_suite",
           "columnsFrom": [
             "artist_id"
           ],
@@ -715,9 +722,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.roles": {
+    "label_suite.roles": {
       "name": "roles",
-      "schema": "",
+      "schema": "label_suite",
       "columns": {
         "id": {
           "name": "id",
@@ -794,6 +801,7 @@
           "name": "roles_contact_id_contacts_id_fk",
           "tableFrom": "roles",
           "tableTo": "contacts",
+          "schemaTo": "label_suite",
           "columnsFrom": [
             "contact_id"
           ],
@@ -807,6 +815,7 @@
           "name": "roles_work_id_works_id_fk",
           "tableFrom": "roles",
           "tableTo": "works",
+          "schemaTo": "label_suite",
           "columnsFrom": [
             "work_id"
           ],
@@ -823,9 +832,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.tracks": {
+    "label_suite.tracks": {
       "name": "tracks",
-      "schema": "",
+      "schema": "label_suite",
       "columns": {
         "id": {
           "name": "id",
@@ -922,6 +931,7 @@
           "name": "tracks_release_id_releases_id_fk",
           "tableFrom": "tracks",
           "tableTo": "releases",
+          "schemaTo": "label_suite",
           "columnsFrom": [
             "release_id"
           ],
@@ -935,6 +945,7 @@
           "name": "tracks_work_id_works_id_fk",
           "tableFrom": "tracks",
           "tableTo": "works",
+          "schemaTo": "label_suite",
           "columnsFrom": [
             "work_id"
           ],
@@ -951,9 +962,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.works": {
+    "label_suite.works": {
       "name": "works",
-      "schema": "",
+      "schema": "label_suite",
       "columns": {
         "id": {
           "name": "id",
