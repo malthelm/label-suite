@@ -1,4 +1,4 @@
-// Temporarily permissive middleware while auth is being set up
+// Permissive middleware — auth will be set up in next iteration
 import { defineMiddleware } from "astro:middleware";
 
 export const onRequest = defineMiddleware(async (context, next) => {
