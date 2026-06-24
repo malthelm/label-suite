@@ -1,40 +1,34 @@
 ---
-import Layout from "../../layouts/Layout.astro";
+import AppLayout from "../../layouts/AppLayout.astro";
 import { supabase } from "../../lib/supabase";
 
-const { data: artists, error } = await supabase
-  .from("artists")
-  .select("id, name, pro, spotify_followers, bio")
-  .order("name");
+const { data: artists } = await supabase.from("artists").select("id, name, pro, spotify_followers, bio").order("name");
 ---
 
-<Layout>
+<AppLayout>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <h1 class="text-3xl font-bold tracking-tight">Artists</h1>
-      <a href="/artists/new" class="px-4 py-2 bg-neutral-900 text-white text-sm rounded-lg hover:bg-neutral-800 transition-colors">+ New Artist</a>
+      <a href="/artists/new" class="inline-flex items-center px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors">+ New Artist</a>
     </div>
 
-    {error && <div class="p-4 rounded-lg bg-red-50 text-red-700 text-sm">Failed to load: {error.message}</div>}
-
-    {!artists?.length && (
+    {!artists?.length ? (
       <div class="p-12 text-center text-neutral-400 border-2 border-dashed border-neutral-200 rounded-xl">
         <p class="text-lg">No artists yet.</p>
-        <p class="text-sm mt-2">Add your first artist to get started.</p>
+      </div>
+    ) : (
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {artists.map((a) => (
+          <a href={`/artists/${a.id}`} class="block p-5 rounded-xl border border-neutral-200 hover:border-neutral-400 hover:shadow-sm transition-all">
+            <h2 class="text-lg font-semibold">{a.name}</h2>
+            <div class="mt-2 flex flex-wrap gap-2 text-xs">
+              {a.pro && <span class="px-2 py-1 bg-neutral-100 rounded-md">{a.pro}</span>}
+              {a.spotify_followers ? <span class="px-2 py-1 bg-green-50 text-green-700 rounded-md">{a.spotify_followers.toLocaleString()} followers</span> : null}
+            </div>
+            {a.bio && <p class="mt-3 text-sm text-neutral-500 line-clamp-2">{a.bio}</p>}
+          </a>
+        ))}
       </div>
     )}
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {artists?.map((a) => (
-        <a href={`/artists/${a.id}`} class="block p-5 rounded-xl border border-neutral-200 hover:border-neutral-400 hover:shadow-sm transition-all">
-          <h2 class="text-lg font-semibold">{a.name}</h2>
-          <div class="mt-2 flex flex-wrap gap-2 text-xs">
-            {a.pro && <span class="px-2 py-1 bg-neutral-100 rounded-md">{a.pro}</span>}
-            {a.spotify_followers ? <span class="px-2 py-1 bg-green-50 text-green-700 rounded-md">{a.spotify_followers.toLocaleString()} followers</span> : null}
-          </div>
-          {a.bio && <p class="mt-3 text-sm text-neutral-500 line-clamp-2">{a.bio}</p>}
-        </a>
-      ))}
-    </div>
   </div>
-</Layout>
+</AppLayout>

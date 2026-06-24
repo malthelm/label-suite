@@ -1,27 +1,39 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import "../styles/global.css";
+export const prerender = true;
 ---
 
-<section class="space-y-8">
-  <div class="space-y-3">
-    <h1 class="text-4xl font-bold tracking-tight">Label Suite</h1>
-    <p class="text-lg text-neutral-500 max-w-2xl">
-      Independent music label operations — releases, clearance tracking, ISRC generation, and your daily cockpit.
-    </p>
-  </div>
-
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-    <a href="/releases" class="block p-6 rounded-xl border border-neutral-200 hover:border-neutral-400 transition-colors">
-      <h2 class="text-lg font-semibold mb-2">📀 Releases</h2>
-      <p class="text-sm text-neutral-500">Track releases from draft to distribution with computed readiness.</p>
-    </a>
-    <a href="/artists" class="block p-6 rounded-xl border border-neutral-200 hover:border-neutral-400 transition-colors">
-      <h2 class="text-lg font-semibold mb-2">🎤 Artists</h2>
-      <p class="text-sm text-neutral-500">Roster management with Spotify integration and PRO data.</p>
-    </a>
-    <a href="/today" class="block p-6 rounded-xl border border-neutral-200 hover:border-neutral-400 transition-colors">
-      <h2 class="text-lg font-semibold mb-2">📋 Today Hub</h2>
-      <p class="text-sm text-neutral-500">Daily cockpit: calls, deadlines, and blockers at a glance.</p>
-    </a>
-  </div>
-</section>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Label Suite</title>
+    <meta name="description" content="Independent music label operations" />
+  </head>
+  <body class="min-h-screen bg-white text-neutral-900 antialiased">
+    <header class="border-b border-neutral-200 px-6 py-4">
+      <nav class="max-w-7xl mx-auto flex items-center justify-between">
+        <a href="/" class="text-lg font-semibold tracking-tight">Label Suite</a>
+        <div class="flex items-center gap-4 text-sm">
+          <a href="/login" class="text-neutral-500 hover:text-neutral-900 transition-colors">Sign In</a>
+          <a href="/signup" class="px-4 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 transition-colors">Get Started</a>
+        </div>
+      </nav>
+    </header>
+    <main class="max-w-7xl mx-auto px-6 py-24">
+      <div class="max-w-2xl">
+        <h1 class="text-5xl font-bold tracking-tight leading-tight">
+          Run your label<br />like a pro.
+        </h1>
+        <p class="text-lg text-neutral-500 mt-6">
+          Release pipeline management, clearance tracking, ISRC generation, and your daily cockpit — all in one place.
+        </p>
+        <div class="mt-8 flex gap-4">
+          <a href="/signup" class="px-6 py-3 bg-neutral-900 text-white font-medium rounded-lg hover:bg-neutral-800 transition-colors">Get Started Free</a>
+          <a href="/login" class="px-6 py-3 border border-neutral-200 text-neutral-700 font-medium rounded-lg hover:bg-neutral-50 transition-colors">Sign In</a>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

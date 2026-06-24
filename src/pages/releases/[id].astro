@@ -1,0 +1,47 @@
+---
+import AppLayout from "../../layouts/AppLayout.astro";
+import { supabase } from "../../lib/supabase";
+
+export async function getStaticPaths() {
+  const { data } = await supabase.from("releases").select("id");
+  return (data ?? []).map((r: { id: string }) => ({ params: { id: r.id } }));
+}
+
+const { id } = Astro.params;
+const { data: release } = await supabase.from("releases").select("*, artists(name)").eq("id", id).single();
+const { data: tracks } = await supabase.from("tracks").select("id, title, position, version, isrc, audio_url, clearance_progress, track_ready").eq("release_id", id).order("position");
+---
+
+<AppLayout>
+  {!release ? <p class="text-neutral-500">Release not found.</p> : (
+    <div class="space-y-8">
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-3xl font-bold tracking-tight">{release.title}</h1>
+          <span class={`text-xs px-2 py-1 rounded-md font-medium ${release.release_ready ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+            {release.release_ready ? "Ready" : "Not Ready"}
+          </span>
+        </div>
+        <p class="text-neutral-500 mt-1">{release.artists?.name} · {release.format} · {release.release_date || "No date"}</p>
+      </div>
+
+      <!-- Tracks -->
+      <section>
+        <h2 class="text-lg font-semibold mb-3">Tracks ({tracks?.length ?? 0})</h2>
+        <div class="space-y-1">
+          {tracks?.map((t) => (
+            <div class="flex items-center justify-between p-3 border border-neutral-200 rounded-lg">
+              <div>
+                <p class="font-medium text-sm">{t.position}. {t.title} {t.version && t.version !== "Main" ? `(${t.version})` : ""}</p>
+                <p class="text-xs text-neutral-500">{t.isrc || "No ISRC"} · {t.audio_url ? "Audio ✓" : "No audio"}</p>
+              </div>
+              <span class={`text-xs px-2 py-1 rounded-md ${t.track_ready ? "bg-green-100 text-green-700" : "bg-neutral-100 text-neutral-600"}`}>
+                {t.track_ready ? "Ready" : `Clearance: ${Math.round((t.clearance_progress ?? 0) * 100)}%`}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  )}
+</AppLayout>

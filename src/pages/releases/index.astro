@@ -1,28 +1,41 @@
 ---
-import Layout from "../../layouts/Layout.astro";
+import AppLayout from "../../layouts/AppLayout.astro";
+import { supabase } from "../../lib/supabase";
 
-const releases = [] as any[];
+const { data: releases } = await supabase.from("releases").select("id, title, format, status, release_date, release_ready, release_missing, artists(name)").order("release_date", { ascending: false });
 ---
 
-<Layout>
+<AppLayout>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <h1 class="text-3xl font-bold tracking-tight">Releases</h1>
-      <a
-        href="/releases/new"
-        class="px-4 py-2 bg-neutral-900 text-white text-sm rounded-lg hover:bg-neutral-800 transition-colors"
-      >
-        + New Release
-      </a>
+      <a href="/releases/new" class="inline-flex items-center px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors">+ New Release</a>
     </div>
 
-    {releases.length === 0 && (
+    {!releases?.length ? (
       <div class="p-12 text-center text-neutral-400 border-2 border-dashed border-neutral-200 rounded-xl">
         <p class="text-lg">No releases yet.</p>
-        <p class="text-sm mt-2">
-          Create your first release to start tracking readiness, clearance, and ISRCs.
-        </p>
+      </div>
+    ) : (
+      <div class="bg-white border border-neutral-200 rounded-xl divide-y divide-neutral-100">
+        {releases.map((r) => (
+          <a href={`/releases/${r.id}`} class="flex items-center justify-between p-4 hover:bg-neutral-50 transition-colors">
+            <div>
+              <p class="font-medium">{r.title}</p>
+              <div class="flex gap-2 mt-1 text-xs text-neutral-500">
+                <span>{r.artists?.name}</span>
+                <span>·</span>
+                <span>{r.format}</span>
+                <span>·</span>
+                <span>{r.release_date || "No date"}</span>
+              </div>
+            </div>
+            <span class={`text-xs px-2 py-1 rounded-md font-medium ${r.release_ready ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+              {r.release_ready ? "Ready" : "Not Ready"}
+            </span>
+          </a>
+        ))}
       </div>
     )}
   </div>
-</Layout>
+</AppLayout>

@@ -1,0 +1,56 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+import { supabase } from "../lib/supabase";
+
+const { data: artists } = await supabase.from("artists").select("id, name, pro, spotify_followers, bio").order("name");
+const { data: releases } = await supabase.from("releases").select("id, title, release_ready, release_date, artists(name)").order("release_date");
+const { data: bugs } = await supabase.from("bugs").select("id").eq("status", "logged");
+---
+
+<AppLayout>
+  <div class="space-y-8">
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight">Dashboard</h1>
+      <p class="text-neutral-500 mt-1">Overview of your label operations.</p>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white border border-neutral-200 rounded-xl p-5">
+        <p class="text-sm text-neutral-500">Artists</p>
+        <p class="text-3xl font-bold mt-1">{artists?.length ?? 0}</p>
+      </div>
+      <div class="bg-white border border-neutral-200 rounded-xl p-5">
+        <p class="text-sm text-neutral-500">Releases</p>
+        <p class="text-3xl font-bold mt-1">{releases?.length ?? 0}</p>
+      </div>
+      <div class="bg-white border border-neutral-200 rounded-xl p-5">
+        <p class="text-sm text-neutral-500">Open Bugs</p>
+        <p class="text-3xl font-bold mt-1">{bugs?.length ?? 0}</p>
+      </div>
+      <div class="bg-white border border-neutral-200 rounded-xl p-5">
+        <p class="text-sm text-neutral-500">Ready</p>
+        <p class="text-3xl font-bold mt-1">{releases?.filter(r => r.release_ready).length ?? 0}/{releases?.length ?? 0}</p>
+      </div>
+    </div>
+
+    <!-- Recent Artists -->
+    <section>
+      <h2 class="text-lg font-semibold mb-3">Artists</h2>
+      <div class="bg-white border border-neutral-200 rounded-xl divide-y divide-neutral-100">
+        {artists?.map((a) => (
+          <a href={`/artists/${a.id}`} class="flex items-center justify-between p-4 hover:bg-neutral-50 transition-colors">
+            <div>
+              <p class="font-medium">{a.name}</p>
+              {a.bio && <p class="text-sm text-neutral-500">{a.bio}</p>}
+            </div>
+            <div class="flex gap-2 text-xs">
+              {a.pro && <span class="px-2 py-1 bg-neutral-100 rounded">{a.pro}</span>}
+              {a.spotify_followers ? <span class="px-2 py-1 bg-green-50 text-green-700 rounded">{a.spotify_followers.toLocaleString()} followers</span> : null}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</AppLayout>

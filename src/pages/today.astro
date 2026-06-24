@@ -1,100 +1,66 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import AppLayout from "../layouts/AppLayout.astro";
 import { supabase } from "../lib/supabase";
 
-const { data: calls, error: callsError } = await supabase
-  .from("calls")
-  .select("id, title, start, notes, contacts(name), releases(title)")
-  .order("start", { ascending: true })
-  .limit(20);
+const { data: calls } = await supabase.from("calls").select("id, title, start, notes, contacts(name), releases(title)").order("start", { ascending: true }).limit(20);
+const { data: bugs } = await supabase.from("bugs").select("id, title, description, priority, status").eq("status", "logged").order("priority").limit(10);
+const { data: blocked } = await supabase.from("releases").select("id, title, release_date, artists(name)").eq("release_ready", false).order("release_date");
 
-const { data: bugs } = await supabase
-  .from("bugs")
-  .select("id, title, description, priority, status")
-  .eq("status", "logged")
-  .order("priority")
-  .limit(10);
-
-const { data: blocked } = await supabase
-  .from("releases")
-  .select("id, title, release_date, artists(name)")
-  .eq("release_ready", false)
-  .order("release_date");
-
-const today = new Date().toLocaleDateString("en-US", {
-  weekday: "long",
-  month: "long",
-  day: "numeric",
-});
+const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 ---
 
-<Layout>
+<AppLayout>
   <div class="space-y-8">
     <div>
       <h1 class="text-3xl font-bold tracking-tight">Today Hub</h1>
       <p class="text-neutral-500 mt-1">{today}</p>
     </div>
 
-    <!-- Calls -->
-    <section>
-      <h2 class="text-xl font-semibold mb-3">📞 Upcoming Calls ({calls?.length || 0})</h2>
-      {callsError && <p class="text-red-600 text-sm">Error: {callsError.message}</p>}
-      {!calls?.length && <p class="text-neutral-400 text-sm">No upcoming calls.</p>}
-      <div class="space-y-2">
-        {calls?.map((c) => (
-          <div class="p-4 rounded-lg border border-neutral-200 flex justify-between items-start">
-            <div>
-              <h3 class="font-medium">{c.title}</h3>
-              <p class="text-sm text-neutral-500">
-                {c.contacts?.name}{c.releases?.title && ` — ${c.releases.title}`}
-              </p>
-              {c.notes && <p class="text-xs text-neutral-400 mt-1">{c.notes}</p>}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Calls -->
+      <section>
+        <h2 class="text-lg font-semibold mb-3">📞 Calls ({calls?.length || 0})</h2>
+        <div class="space-y-2">
+          {!calls?.length && <p class="text-sm text-neutral-400">No upcoming calls.</p>}
+          {calls?.map((c) => (
+            <div class="p-4 rounded-lg border border-neutral-200">
+              <h3 class="font-medium text-sm">{c.title}</h3>
+              <p class="text-xs text-neutral-500 mt-1">{c.contacts?.name}{c.releases?.title ? ` — ${c.releases.title}` : ""}</p>
+              {c.start && <p class="text-xs text-neutral-400 mt-1">{new Date(c.start).toLocaleDateString()} · {new Date(c.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>}
             </div>
-            {c.start && (
-              <span class="text-sm text-neutral-400 whitespace-nowrap">
-                {new Date(c.start).toLocaleDateString()} {new Date(c.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-    </section>
+          ))}
+        </div>
+      </section>
 
-    <!-- Blocked -->
-    <section>
-      <h2 class="text-xl font-semibold mb-3">⛔ Blocked Releases ({blocked?.length || 0})</h2>
-      {!blocked?.length && <p class="text-neutral-400 text-sm">All releases ready. 🎉</p>}
-      <div class="space-y-2">
-        {blocked?.map((r) => (
-          <a href={`/releases/${r.id}`} class="block p-4 rounded-lg border border-red-100 bg-red-50/50 hover:bg-red-50 transition-colors">
-            <div class="flex justify-between">
-              <h3 class="font-medium">{r.title}</h3>
-              <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-md">Not Ready</span>
-            </div>
-            <p class="text-sm text-neutral-500 mt-1">{r.artists?.name} · {r.release_date || "No date set"}</p>
-          </a>
-        ))}
-      </div>
-    </section>
+      <!-- Blocked -->
+      <section>
+        <h2 class="text-lg font-semibold mb-3">⛔ Blocked ({blocked?.length || 0})</h2>
+        <div class="space-y-2">
+          {!blocked?.length && <p class="text-sm text-neutral-400">All clear! 🎉</p>}
+          {blocked?.map((r) => (
+            <a href={`/releases/${r.id}`} class="block p-4 rounded-lg border border-red-100 bg-red-50/50 hover:bg-red-50 transition-colors">
+              <h3 class="font-medium text-sm">{r.title}</h3>
+              <p class="text-xs text-neutral-500 mt-1">{r.artists?.name} · {r.release_date || "No date"}</p>
+            </a>
+          ))}
+        </div>
+      </section>
 
-    <!-- Open Bugs -->
-    <section>
-      <h2 class="text-xl font-semibold mb-3">🐛 Open Bugs ({bugs?.length || 0})</h2>
-      <div class="space-y-2">
-        {bugs?.map((b) => (
-          <div class="p-4 rounded-lg border border-neutral-200">
-            <div class="flex items-center gap-2">
-              <span class={`text-xs px-2 py-0.5 rounded-md font-medium ${
-                b.priority === "P0" ? "bg-red-100 text-red-700" :
-                b.priority === "P1" ? "bg-orange-100 text-orange-700" :
-                "bg-neutral-100 text-neutral-600"
-              }`}>{b.priority}</span>
-              <h3 class="font-medium">{b.title}</h3>
+      <!-- Bugs -->
+      <section>
+        <h2 class="text-lg font-semibold mb-3">🐛 Bugs ({bugs?.length || 0})</h2>
+        <div class="space-y-2">
+          {bugs?.map((b) => (
+            <div class="p-4 rounded-lg border border-neutral-200">
+              <div class="flex items-center gap-2">
+                <span class={`text-xs px-2 py-0.5 rounded font-medium ${b.priority === "P0" ? "bg-red-100 text-red-700" : b.priority === "P1" ? "bg-orange-100 text-orange-700" : "bg-neutral-100 text-neutral-600"}`}>{b.priority}</span>
+                <h3 class="font-medium text-sm">{b.title}</h3>
+              </div>
+              {b.description && <p class="text-xs text-neutral-500 mt-1">{b.description}</p>}
             </div>
-            {b.description && <p class="text-sm text-neutral-500 mt-1">{b.description}</p>}
-          </div>
-        ))}
-      </div>
-    </section>
+          ))}
+        </div>
+      </section>
+    </div>
   </div>
-</Layout>
+</AppLayout>

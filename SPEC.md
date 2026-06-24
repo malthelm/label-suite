@@ -34,10 +34,12 @@
 └── Deploy: Node adapter → rsync → Winona Caddy → Cloudflare Tunnel
 ```
 
-**Why hybrid SSR?**
-- Static mode (current) requires rebuild for every data change — unacceptable for a SaaS
+**Why server mode (not hybrid)?**
+- Research confirmed: for a SaaS where most pages are dynamic (auth-gated, live data), `output: 'server'` is cleaner than `hybrid`
+- Server mode: everything is SSR by default, opt INTO static with `prerender = true` on marketing pages only
+- Hybrid would mean sprinkling `prerender = false` on every dashboard page — boilerplate
 - SSR gives us: live data on every request, auth-gated routes, API endpoints, middleware
-- Static pages still pre-rendered for SEO (landing, marketing)
+- Node adapter `mode: 'standalone'` → runs as Node HTTP server → Caddy reverse-proxies to it
 
 **Why Better Auth over Supabase Auth?**
 - Supabase Auth on self-hosted requires Kong (which we don't have)
@@ -80,23 +82,23 @@ Design system refinement, dark mode, mobile optimization, production deploy.
 
 ## Phase 1: Foundation — SSR + Auth + Layout
 
-### Task 1.1: Switch to hybrid SSR mode
+### Task 1.1: Switch to server SSR mode
 
 **Files:**
-- Modify: `astro.config.mjs` — add `output: 'hybrid'` + Node adapter
+- Modify: `astro.config.mjs` — add `output: 'server'` + Node adapter
 - Install: `@astrojs/node`
 
 **Steps:**
 1. `npm install @astrojs/node`
 2. Update `astro.config.mjs`:
    ```js
-   output: 'hybrid',
+   output: 'server',
    adapter: node({ mode: 'standalone' }),
    ```
-3. Add `export const prerender = true` to landing page (`/`)
-4. All other pages default to SSR
+3. Add `export const prerender = true` to landing page (`/`) — marketing stays static
+4. All other pages default to SSR (no boilerplate needed)
 5. Test: `npm run dev` → verify pages still load
-6. Build: `npm run build` → verify `dist/server/` exists alongside static pages
+6. Build: `npm run build` → verify `dist/server/entry.mjs` exists
 
 ### Task 1.2: Install shadcn/ui
 
