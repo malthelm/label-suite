@@ -24,19 +24,19 @@ const blockedRows = await db.select({
   <div class="space-y-8">
     <div>
       <h1 class="text-3xl font-bold tracking-tight">Today Hub</h1>
-      <p class="text-neutral-500 mt-1">{today}</p>
+      <p class="text-muted-foreground mt-1">{today}</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <section>
         <h2 class="text-lg font-semibold mb-3">📞 Calls ({callRows.length})</h2>
         <div class="space-y-2">
-          {!callRows.length && <p class="text-sm text-neutral-400">No upcoming calls.</p>}
+          {!callRows.length && <p class="text-sm text-muted-foreground">No upcoming calls.</p>}
           {callRows.map((c) => (
-            <div class="p-4 rounded-lg border border-neutral-200">
+            <div class="p-4 rounded-lg border border-border">
               <h3 class="font-medium text-sm">{c.title}</h3>
-              <p class="text-xs text-neutral-500 mt-1">{c.contact_name}{c.release_title ? ` — ${c.release_title}` : ""}</p>
-              {c.start && <p class="text-xs text-neutral-400 mt-1">{new Date(c.start).toLocaleDateString()} · {new Date(c.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>}
+              <p class="text-xs text-muted-foreground mt-1">{c.contact_name}{c.release_title ? ` — ${c.release_title}` : ""}</p>
+              {c.start && <p class="text-xs text-muted-foreground mt-1">{new Date(c.start).toLocaleDateString()} · {new Date(c.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>}
             </div>
           ))}
         </div>
@@ -45,11 +45,11 @@ const blockedRows = await db.select({
       <section>
         <h2 class="text-lg font-semibold mb-3">⛔ Blocked ({blockedRows.length})</h2>
         <div class="space-y-2">
-          {!blockedRows.length && <p class="text-sm text-neutral-400">All clear! 🎉</p>}
+          {!blockedRows.length && <p class="text-sm text-muted-foreground">All clear! 🎉</p>}
           {blockedRows.map((r) => (
             <a href={`/releases/${r.id}`} class="block p-4 rounded-lg border border-red-100 bg-red-50/50 hover:bg-red-50 transition-colors">
               <h3 class="font-medium text-sm">{r.title}</h3>
-              <p class="text-xs text-neutral-500 mt-1">{r.artist_name} · {r.release_date || "No date"}</p>
+              <p class="text-xs text-muted-foreground mt-1">{r.artist_name} · {r.release_date || "No date"}</p>
             </a>
           ))}
         </div>

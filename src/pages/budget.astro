@@ -20,20 +20,20 @@ const total = itemRows.reduce((sum, i) => sum + (i.amount ?? 0), 0);
     </div>
 
     {!itemRows.length ? (
-      <div class="p-12 text-center text-neutral-400 border-2 border-dashed border-neutral-200 rounded-xl">
+      <div class="p-12 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
         <p class="text-lg">No budget items yet.</p>
       </div>
     ) : (
-      <div class="bg-white border border-neutral-200 rounded-xl divide-y divide-neutral-100">
+      <div class="bg-card border border-border rounded-xl divide-y divide-border">
         {itemRows.map((i) => (
           <div class="flex items-center justify-between p-4">
             <div>
               <p class="font-medium">{i.name}</p>
-              <p class="text-sm text-neutral-500">{i.release_title || "—"}</p>
+              <p class="text-sm text-muted-foreground">{i.release_title || "—"}</p>
             </div>
             <div class="text-right">
               <p class="font-medium">${i.amount?.toLocaleString()}</p>
-              <span class="text-xs px-2 py-0.5 rounded bg-neutral-100 text-neutral-600">{i.status}</span>
+              <span class="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">{i.status}</span>
             </div>
           </div>
         ))}

@@ -14,30 +14,30 @@ const releaseRows = await db.select().from(releases).where(eq(releases.artist_id
 ---
 
 <AppLayout>
-  {!artist ? <p class="text-neutral-500">Artist not found.</p> : (
+  {!artist ? <p class="text-muted-foreground">Artist not found.</p> : (
     <div class="space-y-8">
       <div>
         <h1 class="text-3xl font-bold tracking-tight">{artist.name}</h1>
         <div class="flex gap-2 mt-2">
-          {artist.pro && <span class="px-2 py-1 text-xs bg-neutral-100 rounded-md">{artist.pro}</span>}
+          {artist.pro && <span class="px-2 py-1 text-xs bg-muted rounded-md">{artist.pro}</span>}
           {artist.spotify_followers ? <span class="px-2 py-1 text-xs bg-green-50 text-green-700 rounded-md">{artist.spotify_followers.toLocaleString()} followers</span> : null}
-          {artist.spotify_popularity ? <span class="px-2 py-1 text-xs bg-neutral-100 rounded-md">Popularity: {artist.spotify_popularity}</span> : null}
+          {artist.spotify_popularity ? <span class="px-2 py-1 text-xs bg-muted rounded-md">Popularity: {artist.spotify_popularity}</span> : null}
         </div>
         <div class="mt-3 flex gap-2">
           <ArtistEditButton client:load artist={artist} />
           <ArtistDeleteButton client:load artist={artist} />
         </div>
       </div>
-      {artist.bio && <p class="text-neutral-600 max-w-2xl">{artist.bio}</p>}
+      {artist.bio && <p class="text-muted-foreground max-w-2xl">{artist.bio}</p>}
 
       <section>
         <h2 class="text-lg font-semibold mb-3">Releases ({releaseRows.length})</h2>
         <div class="space-y-2">
           {releaseRows.map((r) => (
-            <a href={`/releases/${r.id}`} class="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors">
+            <a href={`/releases/${r.id}`} class="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors">
               <div>
                 <p class="font-medium">{r.title}</p>
-                <p class="text-sm text-neutral-500">{r.format} · {r.release_date}</p>
+                <p class="text-sm text-muted-foreground">{r.format} · {r.release_date}</p>
               </div>
               <span class={`text-xs px-2 py-1 rounded-md ${r.release_ready ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                 {r.release_ready ? "Ready" : "Not Ready"}

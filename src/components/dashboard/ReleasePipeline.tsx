@@ -11,10 +11,10 @@ interface ReleaseCard {
 }
 
 const columns: Array<{ key: string; label: string; color: string }> = [
-  { key: "draft", label: "Draft", color: "bg-neutral-100 text-neutral-600" },
+  { key: "draft", label: "Draft", color: "bg-muted text-muted-foreground" },
   { key: "scheduled", label: "Scheduled", color: "bg-blue-100 text-blue-700" },
   { key: "released", label: "Released", color: "bg-green-100 text-green-700" },
-  { key: "archived", label: "Archived", color: "bg-neutral-200 text-neutral-400" },
+  { key: "archived", label: "Archived", color: "bg-muted text-muted-foreground" },
 ];
 
 export function ReleasePipeline({ releases }: { releases: ReleaseCard[] }) {
@@ -29,31 +29,31 @@ export function ReleasePipeline({ releases }: { releases: ReleaseCard[] }) {
           return (
             <div
               key={col.key}
-              className="bg-neutral-50 rounded-xl border border-neutral-200 p-3 space-y-2"
+              className="bg-muted/50 rounded-xl border border-border p-3 space-y-2"
             >
               <div className="flex items-center justify-between mb-2">
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${col.color}`}>
                   {col.label}
                 </span>
-                <span className="text-xs text-neutral-400">{items.length}</span>
+                <span className="text-xs text-muted-foreground">{items.length}</span>
               </div>
               {!items.length ? (
-                <p className="text-xs text-neutral-300 italic">No releases</p>
+                <p className="text-xs text-muted-foreground italic">No releases</p>
               ) : (
                 items.map((r) => (
                   <a
                     key={r.id}
                     href={`/releases/${r.id}`}
-                    className="block p-3 bg-white rounded-lg border border-neutral-100 hover:border-neutral-300 hover:shadow-sm transition-all"
+                    className="block p-3 bg-card rounded-lg border border-border hover:border-border/80 hover:shadow-sm transition-all"
                   >
                     <p className="text-sm font-medium truncate">{r.title}</p>
-                    <p className="text-xs text-neutral-400 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {r.artist_name || "—"}
                       {r.format ? ` · ${r.format}` : ""}
                     </p>
                     <div className="flex items-center gap-2 mt-1.5">
                       {r.release_date && (
-                        <span className="text-xs text-neutral-400">{r.release_date}</span>
+                        <span className="text-xs text-muted-foreground">{r.release_date}</span>
                       )}
                       {r.release_ready !== null && r.release_ready !== undefined && (
                         <span

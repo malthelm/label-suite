@@ -30,18 +30,18 @@ const artistRowsForForm = await db.select({ id: artists.id, name: artists.name }
     </div>
 
     {!releaseRows.length ? (
-      <div class="p-12 text-center text-neutral-400 border-2 border-dashed border-neutral-200 rounded-xl">
+      <div class="p-12 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
         <p class="text-lg">No releases yet.</p>
       </div>
     ) : (
-      <div class="bg-white border border-neutral-200 rounded-xl divide-y divide-neutral-100">
+      <div class="bg-card border border-border rounded-xl divide-y divide-border">
         {releaseRows.map((r) => (
-          <div class="flex items-center justify-between p-4 hover:bg-neutral-50 transition-colors">
+          <div class="flex items-center justify-between p-4 hover:bg-accent transition-colors">
             <a href={`/releases/${r.id}`} class="flex-1">
               <p class="font-medium">{r.title}</p>
-              <div class="flex gap-2 mt-1 text-xs text-neutral-500">
+              <div class="flex gap-2 mt-1 text-xs text-muted-foreground">
                 <span>{r.artist_name || "—"}</span><span>·</span><span>{r.format}</span><span>·</span><span>{r.release_date || "No date"}</span>
-                {r.status && <><span>·</span><span class="px-1.5 py-0.5 bg-neutral-100 rounded">{r.status}</span></>}
+                {r.status && <><span>·</span><span class="px-1.5 py-0.5 bg-muted rounded">{r.status}</span></>}
               </div>
             </a>
             <div class="flex items-center gap-3">
