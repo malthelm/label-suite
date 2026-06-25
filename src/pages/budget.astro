@@ -1,22 +1,47 @@
 ---
 import AppLayout from "../layouts/AppLayout.astro";
 import { db } from "../lib/db";
-import { budget_line_items, releases } from "../db/schema";
+import { budget_line_items, budget_categories, releases } from "../db/schema";
 import { eq, desc } from "drizzle-orm";
 
+// Fetch all budget items joined with categories and releases
 const itemRows = await db.select({
-  id: budget_line_items.id, name: budget_line_items.name, amount: budget_line_items.amount,
-  status: budget_line_items.status, release_title: releases.title,
-}).from(budget_line_items).leftJoin(releases, eq(budget_line_items.release_id, releases.id)).orderBy(desc(budget_line_items.created_at)).limit(50);
+  id: budget_line_items.id,
+  name: budget_line_items.name,
+  amount: budget_line_items.amount,
+  status: budget_line_items.status,
+  category_name: budget_categories.name,
+  category_type: budget_categories.type,
+  release_title: releases.title,
+}).from(budget_line_items)
+  .leftJoin(budget_categories, eq(budget_line_items.category_id, budget_categories.id))
+  .leftJoin(releases, eq(budget_line_items.release_id, releases.id))
+  .orderBy(desc(budget_line_items.created_at))
+  .limit(200);
 
-const total = itemRows.reduce((sum, i) => sum + (i.amount ?? 0), 0);
+// Group by bucket (category_type)
+const buckets = new Map<string, { label: string; items: typeof itemRows; total: number }>();
+for (const item of itemRows) {
+  const key = item.category_type || "uncategorized";
+  if (!buckets.has(key)) {
+    buckets.set(key, { label: item.category_name || key, items: [], total: 0 });
+  }
+  const b = buckets.get(key)!;
+  b.items.push(item);
+  b.total += item.amount ?? 0;
+}
+const bucketList = Array.from(buckets.entries())
+  .map(([key, val]) => ({ key, ...val }))
+  .sort((a, b) => b.total - a.total);
+
+const grandTotal = itemRows.reduce((s, i) => s + (i.amount ?? 0), 0);
 ---
 
 <AppLayout>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <h1 class="text-3xl font-bold tracking-tight">Budget</h1>
-      <p class="text-2xl font-bold">${total.toLocaleString()}</p>
+      <p class="text-2xl font-bold">${grandTotal.toLocaleString()}</p>
     </div>
 
     {!itemRows.length ? (
@@ -24,20 +49,52 @@ const total = itemRows.reduce((sum, i) => sum + (i.amount ?? 0), 0);
         <p class="text-lg">No budget items yet.</p>
       </div>
     ) : (
-      <div class="bg-card border border-border rounded-xl divide-y divide-border">
-        {itemRows.map((i) => (
-          <div class="flex items-center justify-between p-4">
-            <div>
-              <p class="font-medium">{i.name}</p>
-              <p class="text-sm text-muted-foreground">{i.release_title || "—"}</p>
+      <>
+        <!-- Bucket totals at top -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {bucketList.map((bucket) => {
+            const pct = grandTotal > 0 ? ((bucket.total / grandTotal) * 100).toFixed(1) : "0.0";
+            return (
+              <div class="bg-card border border-border rounded-xl p-4">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <p class="text-sm font-semibold">{bucket.label}</p>
+                    <p class="text-xs text-muted-foreground">{bucket.items.length} items</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-lg font-bold">${Number(bucket.total).toLocaleString()}</p>
+                    <p class="text-xs text-muted-foreground">{pct}%</p>
+                  </div>
+                </div>
+                <div class="mt-2 w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div
+                    class="h-full rounded-full bg-neutral-500"
+                    style={`width: ${pct}%`}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <!-- Flat list for detail -->
+        <div class="bg-card border border-border rounded-xl divide-y divide-border">
+          {itemRows.map((i) => (
+            <div class="flex items-center justify-between p-4">
+              <div class="flex-1 min-w-0">
+                <p class="font-medium truncate">{i.name}</p>
+                <p class="text-sm text-muted-foreground truncate">
+                  {i.release_title || "\u2014"} {i.category_name ? `· ${i.category_name}` : ""}
+                </p>
+              </div>
+              <div class="text-right flex-shrink-0 ml-4">
+                <p class="font-medium">${i.amount?.toLocaleString()}</p>
+                <span class="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">{i.status}</span>
+              </div>
             </div>
-            <div class="text-right">
-              <p class="font-medium">${i.amount?.toLocaleString()}</p>
-              <span class="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">{i.status}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </>
     )}
   </div>
 </AppLayout>

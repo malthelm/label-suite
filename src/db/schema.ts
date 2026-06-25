@@ -81,6 +81,8 @@ export const tracks = schema.table("tracks", {
   track_ready: boolean("track_ready").default(false),
   track_missing: text("track_missing"),
   clearance_progress: real("clearance_progress").default(0),
+  clearance_pub: real("clearance_pub").default(0),
+  clearance_master: real("clearance_master").default(0),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });

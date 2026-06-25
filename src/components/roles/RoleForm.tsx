@@ -108,6 +108,9 @@ export function RoleForm({
           <select value={ownership} onChange={(e) => setOwnership(e.target.value)} className={inputCls}>
             {OWNERSHIP.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
+          <p className="text-xs text-neutral-400 mt-1">
+            Credit lines are not counted in clearance calculations.
+          </p>
         </div>
       </div>
 

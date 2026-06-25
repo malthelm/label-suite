@@ -32,17 +32,53 @@ const trackRows = await db.select().from(tracks).where(eq(tracks.work_id, id)).o
       <section>
         <h2 class="text-lg font-semibold mb-3">Tracks using this work — {trackRows.length}</h2>
         <div class="bg-card border border-border rounded-xl divide-y divide-border">
-          {trackRows.map((t) => (
-            <a href={`/releases/${t.release_id}`} class="flex items-center justify-between p-4 hover:bg-accent transition-colors">
-              <div>
-                <p class="font-medium">{t.title}</p>
-                <p class="text-sm text-muted-foreground">{t.isrc || "No ISRC"}</p>
-              </div>
-              <span class={`text-xs px-2 py-1 rounded-md ${t.track_ready ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}`}>
-                {t.track_ready ? "Ready" : `${Math.round((t.clearance_progress ?? 0) * 100)}%`}
-              </span>
-            </a>
-          ))}
+          {trackRows.map((t) => {
+            const pubPct = Math.round((t.clearance_pub ?? 0) * 100);
+            const masterPct = Math.round((t.clearance_master ?? 0) * 100);
+            const overallPct = Math.round((t.clearance_progress ?? 0) * 100);
+            const ready = t.track_ready;
+            return (
+              <a href={`/releases/${t.release_id}`} class="block p-4 hover:bg-accent transition-colors">
+                <div class="flex items-center justify-between mb-2">
+                  <div>
+                    <p class="font-medium">{t.title}</p>
+                    <p class="text-sm text-muted-foreground">{t.isrc || "No ISRC"}</p>
+                  </div>
+                  <span class={`text-xs px-2 py-1 rounded-md shrink-0 ${ready ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}`}>
+                    {ready ? "Ready" : `${overallPct}%`}
+                  </span>
+                </div>
+                {!ready && (
+                  <div class="space-y-1.5">
+                    <div>
+                      <div class="flex items-center justify-between text-xs text-muted-foreground mb-0.5">
+                        <span>Publishing</span>
+                        <span>{pubPct}%</span>
+                      </div>
+                      <div class="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                          class="h-full bg-blue-500 rounded-full transition-all"
+                          style={`width: ${Math.min(pubPct, 100)}%`}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex items-center justify-between text-xs text-muted-foreground mb-0.5">
+                        <span>Master</span>
+                        <span>{masterPct}%</span>
+                      </div>
+                      <div class="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                          class="h-full bg-amber-500 rounded-full transition-all"
+                          style={`width: ${Math.min(masterPct, 100)}%`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </a>
+            );
+          })}
           {!trackRows.length && <p class="p-4 text-sm text-muted-foreground">No tracks linked.</p>}
         </div>
       </section>

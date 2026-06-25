@@ -8,6 +8,13 @@
       "when": 1782308742862,
       "tag": "0000_jazzy_nitro",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782401648596,
+      "tag": "0001_curvy_vapor",
+      "breakpoints": true
     }
   ]
 }

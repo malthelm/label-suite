@@ -58,19 +58,28 @@ const artistRowsForForm = await db.select({ id: artists.id, name: artists.name }
           <a href={`/releases/${id}/tracks`} class="text-xs text-muted-foreground hover:text-foreground">Manage tracks →</a>
         </div>
         <div class="space-y-1">
-          {trackRows.map((t) => (
-            <div class="flex items-center justify-between p-3 border border-border rounded-lg gap-3">
-              <div class="flex-1">
-                <p class="font-medium text-sm">{t.position}. {t.title} {t.version && t.version !== "Main" ? `(${t.version})` : ""}</p>
-                <p class="text-xs text-muted-foreground">{t.isrc || "No ISRC"} · {t.audio_url ? "Audio ✓" : "No audio"}</p>
+          {trackRows.map((t) => {
+            const pubPct = Math.round((t.clearance_pub ?? 0) * 100);
+            const masterPct = Math.round((t.clearance_master ?? 0) * 100);
+            return (
+              <div class="flex items-center justify-between p-3 border border-border rounded-lg gap-3">
+                <div class="flex-1">
+                  <p class="font-medium text-sm">{t.position}. {t.title} {t.version && t.version !== "Main" ? `(${t.version})` : ""}</p>
+                  <p class="text-xs text-muted-foreground">{t.isrc || "No ISRC"} · {t.audio_url ? "Audio ✓" : "No audio"}</p>
+                  {!t.track_ready && (
+                    <p class="text-xs text-muted-foreground mt-1">
+                      Pub {pubPct}% · Mst {masterPct}%
+                    </p>
+                  )}
+                </div>
+                <span class={`text-xs px-2 py-1 rounded-md ${t.track_ready ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}`}>
+                  {t.track_ready ? "Ready" : `${Math.round((t.clearance_progress ?? 0) * 100)}%`}
+                </span>
+                <TrackEditButton client:load track={t} works={workRows} />
+                <TrackDeleteButton client:load track={t} />
               </div>
-              <span class={`text-xs px-2 py-1 rounded-md ${t.track_ready ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}`}>
-                {t.track_ready ? "Ready" : `Clearance: ${Math.round((t.clearance_progress ?? 0) * 100)}%`}
-              </span>
-              <TrackEditButton client:load track={t} works={workRows} />
-              <TrackDeleteButton client:load track={t} />
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     </div>
