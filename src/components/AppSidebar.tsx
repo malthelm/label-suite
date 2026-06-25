@@ -19,6 +19,7 @@ import {
   CalendarDays,
   DollarSign,
   Music,
+  ContactRound,
 } from "lucide-react";
 
 const items = [
@@ -27,6 +28,7 @@ const items = [
   { title: "Artists", url: "/artists", icon: Users },
   { title: "Releases", url: "/releases", icon: Disc3 },
   { title: "Works", url: "/works", icon: Music },
+  { title: "Contacts", url: "/contacts", icon: ContactRound },
   { title: "Budget", url: "/budget", icon: DollarSign },
 ];
 
