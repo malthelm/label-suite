@@ -1,6 +1,6 @@
 import { db, pool } from "./db";
-import { tracks, releases, roles, bugs } from "../db/schema";
-import { eq, and } from "drizzle-orm";
+import { tracks, releases, roles, bugs, works } from "../db/schema";
+import { eq, and, inArray } from "drizzle-orm";
 
 /**
  * Compute readiness for a single track.
@@ -98,6 +98,7 @@ export async function computeClearanceProgress(workId: string): Promise<number> 
 
 /**
  * Persist clearance progress to all tracks linked to a work.
+ * Also re-persists track readiness for each affected track.
  */
 export async function persistClearanceProgress(workId: string): Promise<void> {
   const progress = await computeClearanceProgress(workId);
@@ -107,52 +108,98 @@ export async function persistClearanceProgress(workId: string): Promise<void> {
       clearance_progress: progress,
       updated_at: new Date(),
     }).where(eq(tracks.id, t.id));
-    // Re-persist track readiness since clearance changed
     await persistTrackReadiness(t.id);
   }
 }
 
 /**
- * Run validation sweep — idempotent bug generation + self-healing closure.
- * Creates/updates bugs for current issues, closes bugs whose conditions are resolved.
+ * After a role mutation, persist clearance for the work, then
+ * re-persist release readiness for every release that has a track
+ * pointing at that work.
  */
-export async function runValidationSweep(): Promise<{ created: number; closed: number }> {
+export async function persistAfterRoleChange(workId: string): Promise<void> {
+  await persistClearanceProgress(workId);
+  const trackRows = await db.select().from(tracks).where(eq(tracks.work_id, workId));
+  const releaseIds = new Set<string>();
+  for (const t of trackRows) {
+    if (t.release_id) releaseIds.add(t.release_id);
+  }
+  for (const rid of releaseIds) {
+    await persistReleaseReadiness(rid);
+  }
+}
+
+/**
+ * Run validation sweep.
+ *
+ * 1. Recompute and persist clearance + readiness for all works and releases.
+ * 2. Upsert bugs for current issues (idempotent via bug_key).
+ * 3. Close auto-generated bugs whose conditions are resolved.
+ *
+ * Returns honest counts: `created` = truly new bugs inserted,
+ * `openIssues` = total open auto-bugs after sweep, `closed` = bugs closed this run.
+ */
+export async function runValidationSweep(): Promise<{
+  created: number;
+  openIssues: number;
+  closed: number;
+  releasesReevaluated: number;
+  tracksReevaluated: number;
+}> {
   let created = 0;
   let closed = 0;
+  let tracksReevaluated = 0;
+  let releasesReevaluated = 0;
+
+  // 1. Recompute clearance + readiness for all works and releases
+  const workRows = await db.select().from(works);
+  for (const w of workRows) {
+    await persistClearanceProgress(w.id);
+  }
 
   const trackRows = await db.select().from(tracks);
+  tracksReevaluated = trackRows.length;
+  for (const t of trackRows) {
+    await persistTrackReadiness(t.id);
+  }
+
+  const releaseRows = await db.select().from(releases);
+  releasesReevaluated = releaseRows.length;
+  for (const r of releaseRows) {
+    await persistReleaseReadiness(r.id);
+  }
+
+  // 2. Generate bugs for current issues (upsert by bug_key)
   const currentBugKeys = new Set<string>();
 
   for (const t of trackRows) {
     if (!t.isrc) {
       const key = `isrc-missing-${t.id}`;
       currentBugKeys.add(key);
-      await db.insert(bugs).values({
-        id: key, bug_key: key, title: "Track missing ISRC",
-        description: `Track "${t.title}" has no ISRC.`, priority: "P1",
-        status: "logged", auto_generated: true, source_table: "tracks", source_record_id: t.id,
-      }).onConflictDoUpdate({
-        target: bugs.bug_key,
-        set: { status: "logged", updated_at: new Date() },
+      const existed = await upsertBug(key, {
+        title: "Track missing ISRC",
+        description: `Track "${t.title}" has no ISRC.`,
+        priority: "P1",
+        sourceTable: "tracks",
+        sourceRecordId: t.id,
       });
-      created++;
+      if (!existed) created++;
     }
     if (!t.audio_url) {
       const key = `audio-missing-${t.id}`;
       currentBugKeys.add(key);
-      await db.insert(bugs).values({
-        id: key, bug_key: key, title: "Track missing audio",
-        description: `Track "${t.title}" has no audio file.`, priority: "P0",
-        status: "logged", auto_generated: true, source_table: "tracks", source_record_id: t.id,
-      }).onConflictDoUpdate({
-        target: bugs.bug_key,
-        set: { status: "logged", updated_at: new Date() },
+      const existed = await upsertBug(key, {
+        title: "Track missing audio",
+        description: `Track "${t.title}" has no audio file.`,
+        priority: "P0",
+        sourceTable: "tracks",
+        sourceRecordId: t.id,
       });
-      created++;
+      if (!existed) created++;
     }
   }
 
-  // Close auto-generated bugs whose condition no longer holds
+  // 3. Close auto-generated bugs whose condition no longer holds
   const autoBugs = await db.select().from(bugs).where(and(
     eq(bugs.auto_generated, true),
     eq(bugs.status, "logged"),
@@ -165,5 +212,50 @@ export async function runValidationSweep(): Promise<{ created: number; closed: n
     }
   }
 
-  return { created, closed };
+  const openBugs = await db.select().from(bugs).where(and(
+    eq(bugs.auto_generated, true),
+    eq(bugs.status, "logged"),
+  ));
+
+  return {
+    created,
+    openIssues: openBugs.length,
+    closed,
+    releasesReevaluated,
+    tracksReevaluated,
+  };
+}
+
+/**
+ * Upsert a bug by bug_key. Returns true if the bug already existed (false if newly created).
+ */
+async function upsertBug(
+  key: string,
+  opts: { title: string; description: string; priority: string; sourceTable: string; sourceRecordId: string },
+): Promise<boolean> {
+  // Check if bug already exists
+  const existing = await db.select().from(bugs).where(eq(bugs.bug_key, key));
+  const existed = existing.length > 0;
+
+  if (existed) {
+    // Re-open if it was closed
+    await db.update(bugs).set({
+      status: "logged",
+      updated_at: new Date(),
+    }).where(eq(bugs.bug_key, key));
+  } else {
+    await db.insert(bugs).values({
+      id: key,
+      bug_key: key,
+      title: opts.title,
+      description: opts.description,
+      priority: opts.priority,
+      status: "logged",
+      auto_generated: true,
+      source_table: opts.sourceTable,
+      source_record_id: opts.sourceRecordId,
+    });
+  }
+
+  return existed;
 }

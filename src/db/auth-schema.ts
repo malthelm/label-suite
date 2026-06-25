@@ -1,7 +1,9 @@
-import { pgTable, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { pgSchema, text, timestamp, boolean } from "drizzle-orm/pg-core";
 
-// Better Auth schema tables (in label_suite schema)
-export const users = pgTable("user", {
+// Better Auth tables — in label_suite schema for isolation
+const schema = pgSchema("label_suite");
+
+export const users = schema.table("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
@@ -11,7 +13,7 @@ export const users = pgTable("user", {
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
 
-export const sessions = pgTable("session", {
+export const sessions = schema.table("session", {
   id: text("id").primaryKey(),
   expiresAt: timestamp("expiresAt").notNull(),
   token: text("token").notNull().unique(),
@@ -22,7 +24,7 @@ export const sessions = pgTable("session", {
   userId: text("userId").notNull().references(() => users.id),
 });
 
-export const accounts = pgTable("account", {
+export const accounts = schema.table("account", {
   id: text("id").primaryKey(),
   accountId: text("accountId").notNull(),
   providerId: text("providerId").notNull(),
@@ -38,7 +40,7 @@ export const accounts = pgTable("account", {
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
 
-export const verifications = pgTable("verification", {
+export const verifications = schema.table("verification", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),

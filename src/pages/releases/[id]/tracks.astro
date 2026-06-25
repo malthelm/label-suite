@@ -1,0 +1,58 @@
+---
+import AppLayout from "../../../layouts/AppLayout.astro";
+import { db } from "../../../lib/db";
+import { releases, artists, tracks, works } from "../../../db/schema";
+import { eq, asc } from "drizzle-orm";
+import { TrackCreateDialog } from "../../../components/tracks/TrackCreateDialog";
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect("/releases");
+
+const releaseRows = await db.select({
+  id: releases.id, title: releases.title, format: releases.format,
+  release_date: releases.release_date, release_ready: releases.release_ready,
+  release_missing: releases.release_missing, artist_name: artists.name,
+}).from(releases).leftJoin(artists, eq(releases.artist_id, artists.id)).where(eq(releases.id, id));
+const release = releaseRows[0];
+
+const trackRows = await db.select().from(tracks).where(eq(tracks.release_id, id)).orderBy(asc(tracks.position));
+const workRows = await db.select({ id: works.id, title: works.title, isrc: works.isrc }).from(works).orderBy(asc(works.title));
+---
+
+<AppLayout>
+  {!release ? <p class="text-neutral-500">Release not found.</p> : (
+    <div class="space-y-8">
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-3xl font-bold tracking-tight">{release.title}</h1>
+          <span class={`text-xs px-2 py-1 rounded-md font-medium ${release.release_ready ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+            {release.release_ready ? "Ready" : "Not Ready"}
+          </span>
+        </div>
+        <p class="text-neutral-500 mt-1">{release.artist_name} · {release.format} · {release.release_date || "No date"}</p>
+        {release.release_missing && <p class="text-sm text-red-600 mt-1">Missing: {release.release_missing}</p>}
+      </div>
+
+      <section>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold">Tracks ({trackRows.length})</h2>
+          <TrackCreateDialog client:load releaseId={id} works={workRows} />
+        </div>
+        <div class="space-y-1">
+          {trackRows.map((t) => (
+            <div class="flex items-center justify-between p-3 border border-neutral-200 rounded-lg">
+              <div>
+                <p class="font-medium text-sm">{t.position ?? "?"}. {t.title} {t.version && t.version !== "Main" ? `(${t.version})` : ""}</p>
+                <p class="text-xs text-neutral-500">{t.isrc || "No ISRC"} · {t.audio_url ? "Audio ✓" : "No audio"}</p>
+              </div>
+              <span class={`text-xs px-2 py-1 rounded-md ${t.track_ready ? "bg-green-100 text-green-700" : "bg-neutral-100 text-neutral-600"}`}>
+                {t.track_ready ? "Ready" : `Clearance: ${Math.round((t.clearance_progress ?? 0) * 100)}%`}
+              </span>
+            </div>
+          ))}
+          {!trackRows.length && <p class="p-4 text-sm text-neutral-400">No tracks yet. Add one to start tracking readiness.</p>}
+        </div>
+      </section>
+    </div>
+  )}
+</AppLayout>

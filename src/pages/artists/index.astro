@@ -3,6 +3,7 @@ import AppLayout from "../../layouts/AppLayout.astro";
 import { db } from "../../lib/db";
 import { artists } from "../../db/schema";
 import { asc } from "drizzle-orm";
+import { ArtistCreateDialog } from "../../components/artists/ArtistCreateDialog";
 
 const artistRows = await db.select().from(artists).orderBy(asc(artists.name));
 ---
@@ -11,7 +12,7 @@ const artistRows = await db.select().from(artists).orderBy(asc(artists.name));
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <h1 class="text-3xl font-bold tracking-tight">Artists</h1>
-      <a href="/artists/new" class="inline-flex items-center px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors">+ New Artist</a>
+      <ArtistCreateDialog client:load />
     </div>
 
     {!artistRows.length ? (
