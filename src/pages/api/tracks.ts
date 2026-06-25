@@ -82,3 +82,24 @@ export const PUT: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 };
+
+export const DELETE: APIRoute = async ({ request }) => {
+  try {
+    const body = await request.json();
+    if (!body.id) {
+      return new Response(JSON.stringify({ error: "ID is required" }), { status: 400, headers: { "Content-Type": "application/json" } });
+    }
+    const existing = (await db.select().from(tracks).where(eq(tracks.id, body.id)))[0];
+    if (!existing) {
+      return new Response(JSON.stringify({ error: "Track not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
+    }
+    await db.delete(tracks).where(eq(tracks.id, body.id));
+    // Re-persist release readiness since track count/missing may have changed
+    if (existing.release_id) {
+      await persistReleaseReadiness(existing.release_id);
+    }
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
+};

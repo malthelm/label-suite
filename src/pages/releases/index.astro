@@ -4,6 +4,7 @@ import { db } from "../../lib/db";
 import { releases, artists } from "../../db/schema";
 import { desc, eq, asc } from "drizzle-orm";
 import { ReleaseCreateDialog } from "../../components/releases/ReleaseCreateDialog";
+import { ReleaseEditButton, ReleaseDeleteButton } from "../../components/releases/ReleaseActionButtons";
 
 const releaseRows = await db.select({
   id: releases.id,
@@ -11,7 +12,10 @@ const releaseRows = await db.select({
   format: releases.format,
   status: releases.status,
   release_date: releases.release_date,
+  upc_ean: releases.upc_ean,
+  cover_art_url: releases.cover_art_url,
   release_ready: releases.release_ready,
+  artist_id: releases.artist_id,
   artist_name: artists.name,
 }).from(releases).leftJoin(artists, eq(releases.artist_id, artists.id)).orderBy(desc(releases.release_date));
 
@@ -32,17 +36,22 @@ const artistRowsForForm = await db.select({ id: artists.id, name: artists.name }
     ) : (
       <div class="bg-white border border-neutral-200 rounded-xl divide-y divide-neutral-100">
         {releaseRows.map((r) => (
-          <a href={`/releases/${r.id}`} class="flex items-center justify-between p-4 hover:bg-neutral-50 transition-colors">
-            <div>
+          <div class="flex items-center justify-between p-4 hover:bg-neutral-50 transition-colors">
+            <a href={`/releases/${r.id}`} class="flex-1">
               <p class="font-medium">{r.title}</p>
               <div class="flex gap-2 mt-1 text-xs text-neutral-500">
-                <span>{r.artist_name}</span><span>·</span><span>{r.format}</span><span>·</span><span>{r.release_date || "No date"}</span>
+                <span>{r.artist_name || "—"}</span><span>·</span><span>{r.format}</span><span>·</span><span>{r.release_date || "No date"}</span>
+                {r.status && <><span>·</span><span class="px-1.5 py-0.5 bg-neutral-100 rounded">{r.status}</span></>}
               </div>
+            </a>
+            <div class="flex items-center gap-3">
+              <span class={`text-xs px-2 py-1 rounded-md font-medium ${r.release_ready ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                {r.release_ready ? "Ready" : "Not Ready"}
+              </span>
+              <ReleaseEditButton client:load release={r} artists={artistRowsForForm} />
+              <ReleaseDeleteButton client:load release={r} />
             </div>
-            <span class={`text-xs px-2 py-1 rounded-md font-medium ${r.release_ready ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-              {r.release_ready ? "Ready" : "Not Ready"}
-            </span>
-          </a>
+          </div>
         ))}
       </div>
     )}

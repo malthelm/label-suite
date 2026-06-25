@@ -2,14 +2,30 @@
 
 import { useState } from "react";
 
-export function ArtistForm({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState("");
-  const [bio, setBio] = useState("");
-  const [pro, setPro] = useState("");
-  const [spotifyId, setSpotifyId] = useState("");
-  const [ipi, setIpi] = useState("");
-  const [instagram, setInstagram] = useState("");
-  const [tiktok, setTiktok] = useState("");
+export interface Artist {
+  id: string;
+  name: string;
+  bio?: string | null;
+  pro?: string | null;
+  spotify_id?: string | null;
+  spotify_followers?: number | null;
+  spotify_popularity?: number | null;
+  ipi?: string | null;
+  instagram?: string | null;
+  tiktok?: string | null;
+}
+
+export function ArtistForm({ initial, onClose }: { initial?: Artist | null; onClose: () => void }) {
+  const isEdit = !!initial;
+  const [name, setName] = useState(initial?.name || "");
+  const [bio, setBio] = useState(initial?.bio || "");
+  const [pro, setPro] = useState(initial?.pro || "");
+  const [spotifyId, setSpotifyId] = useState(initial?.spotify_id || "");
+  const [followers, setFollowers] = useState(initial?.spotify_followers?.toString() || "");
+  const [popularity, setPopularity] = useState(initial?.spotify_popularity?.toString() || "");
+  const [ipi, setIpi] = useState(initial?.ipi || "");
+  const [instagram, setInstagram] = useState(initial?.instagram || "");
+  const [tiktok, setTiktok] = useState(initial?.tiktok || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -18,14 +34,20 @@ export function ArtistForm({ onClose }: { onClose: () => void }) {
     setLoading(true);
     setError("");
     try {
+      const body: Record<string, any> = {
+        name, bio, pro, spotify_id: spotifyId,
+        spotify_followers: followers || null,
+        spotify_popularity: popularity || null,
+        ipi, instagram, tiktok,
+      };
       const res = await fetch("/api/artists", {
-        method: "POST",
+        method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, bio, pro, spotify_id: spotifyId, ipi, instagram, tiktok }),
+        body: JSON.stringify(isEdit ? { ...body, id: initial!.id } : body),
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create artist");
+        throw new Error(data.error || `Failed to ${isEdit ? "update" : "create"} artist`);
       }
       window.location.reload();
     } catch (err: any) {
@@ -61,6 +83,18 @@ export function ArtistForm({ onClose }: { onClose: () => void }) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-1">Spotify Followers</label>
+          <input type="number" value={followers} onChange={(e) => setFollowers(e.target.value)}
+            className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-1">Spotify Popularity</label>
+          <input type="number" min="0" max="100" value={popularity} onChange={(e) => setPopularity(e.target.value)}
+            className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
           <label className="block text-sm font-medium text-neutral-700 mb-1">IPI</label>
           <input value={ipi} onChange={(e) => setIpi(e.target.value)}
             className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />
@@ -81,7 +115,7 @@ export function ArtistForm({ onClose }: { onClose: () => void }) {
         <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-neutral-600 hover:text-neutral-900">Cancel</button>
         <button type="submit" disabled={loading}
           className="px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 disabled:opacity-50">
-          {loading ? "Creating..." : "Create Artist"}
+          {loading ? "Saving..." : isEdit ? "Save Changes" : "Create Artist"}
         </button>
       </div>
     </form>

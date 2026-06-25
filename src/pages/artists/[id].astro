@@ -3,6 +3,7 @@ import AppLayout from "../../layouts/AppLayout.astro";
 import { db } from "../../lib/db";
 import { artists, releases } from "../../db/schema";
 import { eq } from "drizzle-orm";
+import { ArtistEditButton, ArtistDeleteButton } from "../../components/artists/ArtistActionButtons";
 
 const { id } = Astro.params;
 if (!id) return Astro.redirect("/artists");
@@ -21,6 +22,10 @@ const releaseRows = await db.select().from(releases).where(eq(releases.artist_id
           {artist.pro && <span class="px-2 py-1 text-xs bg-neutral-100 rounded-md">{artist.pro}</span>}
           {artist.spotify_followers ? <span class="px-2 py-1 text-xs bg-green-50 text-green-700 rounded-md">{artist.spotify_followers.toLocaleString()} followers</span> : null}
           {artist.spotify_popularity ? <span class="px-2 py-1 text-xs bg-neutral-100 rounded-md">Popularity: {artist.spotify_popularity}</span> : null}
+        </div>
+        <div class="mt-3 flex gap-2">
+          <ArtistEditButton client:load artist={artist} />
+          <ArtistDeleteButton client:load artist={artist} />
         </div>
       </div>
       {artist.bio && <p class="text-neutral-600 max-w-2xl">{artist.bio}</p>}

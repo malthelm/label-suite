@@ -4,6 +4,7 @@ import { db } from "../../lib/db";
 import { artists } from "../../db/schema";
 import { asc } from "drizzle-orm";
 import { ArtistCreateDialog } from "../../components/artists/ArtistCreateDialog";
+import { ArtistEditButton, ArtistDeleteButton } from "../../components/artists/ArtistActionButtons";
 
 const artistRows = await db.select().from(artists).orderBy(asc(artists.name));
 ---
@@ -22,14 +23,20 @@ const artistRows = await db.select().from(artists).orderBy(asc(artists.name));
     ) : (
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {artistRows.map((a) => (
-          <a href={`/artists/${a.id}`} class="block p-5 rounded-xl border border-neutral-200 hover:border-neutral-400 hover:shadow-sm transition-all">
-            <h2 class="text-lg font-semibold">{a.name}</h2>
-            <div class="mt-2 flex flex-wrap gap-2 text-xs">
-              {a.pro && <span class="px-2 py-1 bg-neutral-100 rounded-md">{a.pro}</span>}
-              {a.spotify_followers ? <span class="px-2 py-1 bg-green-50 text-green-700 rounded-md">{a.spotify_followers.toLocaleString()} followers</span> : null}
+          <div class="block p-5 rounded-xl border border-neutral-200 hover:border-neutral-400 hover:shadow-sm transition-all">
+            <a href={`/artists/${a.id}`} class="block">
+              <h2 class="text-lg font-semibold">{a.name}</h2>
+              <div class="mt-2 flex flex-wrap gap-2 text-xs">
+                {a.pro && <span class="px-2 py-1 bg-neutral-100 rounded-md">{a.pro}</span>}
+                {a.spotify_followers ? <span class="px-2 py-1 bg-green-50 text-green-700 rounded-md">{a.spotify_followers.toLocaleString()} followers</span> : null}
+              </div>
+              {a.bio && <p class="mt-3 text-sm text-neutral-500 line-clamp-2">{a.bio}</p>}
+            </a>
+            <div class="mt-3 pt-3 border-t border-neutral-100 flex gap-2">
+              <ArtistEditButton client:load artist={a} />
+              <ArtistDeleteButton client:load artist={a} />
             </div>
-            {a.bio && <p class="mt-3 text-sm text-neutral-500 line-clamp-2">{a.bio}</p>}
-          </a>
+          </div>
         ))}
       </div>
     )}

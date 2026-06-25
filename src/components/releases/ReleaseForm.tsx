@@ -2,13 +2,30 @@
 
 import { useState } from "react";
 
-export function ReleaseForm({ artists, onClose }: { artists: Array<{ id: string; name: string }>; onClose: () => void }) {
-  const [title, setTitle] = useState("");
-  const [artistId, setArtistId] = useState("");
-  const [releaseDate, setReleaseDate] = useState("");
-  const [format, setFormat] = useState("single");
-  const [upc, setUpc] = useState("");
-  const [coverArt, setCoverArt] = useState("");
+export interface Release {
+  id: string;
+  title: string;
+  artist_id?: string | null;
+  release_date?: string | null;
+  format?: string | null;
+  upc_ean?: string | null;
+  cover_art_url?: string | null;
+  status?: string | null;
+}
+
+export function ReleaseForm({ initial, artists, onClose }: {
+  initial?: Release | null;
+  artists: Array<{ id: string; name: string }>;
+  onClose: () => void;
+}) {
+  const isEdit = !!initial;
+  const [title, setTitle] = useState(initial?.title || "");
+  const [artistId, setArtistId] = useState(initial?.artist_id || "");
+  const [releaseDate, setReleaseDate] = useState(initial?.release_date || "");
+  const [format, setFormat] = useState(initial?.format || "single");
+  const [status, setStatus] = useState(initial?.status || "draft");
+  const [upc, setUpc] = useState(initial?.upc_ean || "");
+  const [coverArt, setCoverArt] = useState(initial?.cover_art_url || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -17,17 +34,22 @@ export function ReleaseForm({ artists, onClose }: { artists: Array<{ id: string;
     setLoading(true);
     setError("");
     try {
+      const body: Record<string, any> = {
+        title,
+        artist_id: artistId || null,
+        release_date: releaseDate || null,
+        format, status,
+        upc_ean: upc || null,
+        cover_art_url: coverArt || null,
+      };
       const res = await fetch("/api/releases", {
-        method: "POST",
+        method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title, artist_id: artistId || null, release_date: releaseDate || null,
-          format, upc_ean: upc || null, cover_art_url: coverArt || null,
-        }),
+        body: JSON.stringify(isEdit ? { ...body, id: initial!.id } : body),
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create release");
+        throw new Error(data.error || `Failed to ${isEdit ? "update" : "create"} release`);
       }
       window.location.reload();
     } catch (err: any) {
@@ -68,6 +90,16 @@ export function ReleaseForm({ artists, onClose }: { artists: Array<{ id: string;
           </select>
         </div>
       </div>
+      <div>
+        <label className="block text-sm font-medium text-neutral-700 mb-1">Status</label>
+        <select value={status} onChange={(e) => setStatus(e.target.value)}
+          className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900">
+          <option value="draft">Draft</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="released">Released</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium text-neutral-700 mb-1">UPC/EAN</label>
@@ -85,7 +117,7 @@ export function ReleaseForm({ artists, onClose }: { artists: Array<{ id: string;
         <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-neutral-600 hover:text-neutral-900">Cancel</button>
         <button type="submit" disabled={loading}
           className="px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 disabled:opacity-50">
-          {loading ? "Creating..." : "Create Release"}
+          {loading ? "Saving..." : isEdit ? "Save Changes" : "Create Release"}
         </button>
       </div>
     </form>

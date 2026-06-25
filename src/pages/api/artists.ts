@@ -56,3 +56,16 @@ export const PUT: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 };
+
+export const DELETE: APIRoute = async ({ request }) => {
+  try {
+    const body = await request.json();
+    if (!body.id) {
+      return new Response(JSON.stringify({ error: "ID is required" }), { status: 400, headers: { "Content-Type": "application/json" } });
+    }
+    await db.delete(artists).where(eq(artists.id, body.id));
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });
+  }
+};

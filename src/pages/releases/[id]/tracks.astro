@@ -4,6 +4,7 @@ import { db } from "../../../lib/db";
 import { releases, artists, tracks, works } from "../../../db/schema";
 import { eq, asc } from "drizzle-orm";
 import { TrackCreateDialog } from "../../../components/tracks/TrackCreateDialog";
+import { TrackEditButton, TrackDeleteButton } from "../../../components/tracks/TrackActionButtons";
 
 const { id } = Astro.params;
 if (!id) return Astro.redirect("/releases");
@@ -40,14 +41,16 @@ const workRows = await db.select({ id: works.id, title: works.title, isrc: works
         </div>
         <div class="space-y-1">
           {trackRows.map((t) => (
-            <div class="flex items-center justify-between p-3 border border-neutral-200 rounded-lg">
-              <div>
+            <div class="flex items-center justify-between p-3 border border-neutral-200 rounded-lg gap-3">
+              <div class="flex-1">
                 <p class="font-medium text-sm">{t.position ?? "?"}. {t.title} {t.version && t.version !== "Main" ? `(${t.version})` : ""}</p>
                 <p class="text-xs text-neutral-500">{t.isrc || "No ISRC"} · {t.audio_url ? "Audio ✓" : "No audio"}</p>
               </div>
               <span class={`text-xs px-2 py-1 rounded-md ${t.track_ready ? "bg-green-100 text-green-700" : "bg-neutral-100 text-neutral-600"}`}>
                 {t.track_ready ? "Ready" : `Clearance: ${Math.round((t.clearance_progress ?? 0) * 100)}%`}
               </span>
+              <TrackEditButton client:load track={t} works={workRows} />
+              <TrackDeleteButton client:load track={t} />
             </div>
           ))}
           {!trackRows.length && <p class="p-4 text-sm text-neutral-400">No tracks yet. Add one to start tracking readiness.</p>}
