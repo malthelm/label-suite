@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { db } from "../../lib/db";
-import { artists } from "../../db/schema";
-import { eq } from "drizzle-orm";
+import { artists, releases } from "../../db/schema";
+import { eq, sql } from "drizzle-orm";
 
 export const prerender = false;
 
@@ -39,8 +39,15 @@ export const PUT: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: "ID is required" }), { status: 400, headers: { "Content-Type": "application/json" } });
     }
 
+    // Validate name the same way POST does — reject empty/whitespace-only
+    if (body.name !== undefined) {
+      if (typeof body.name !== "string" || body.name.trim().length === 0) {
+        return new Response(JSON.stringify({ error: "Name cannot be blank" }), { status: 400, headers: { "Content-Type": "application/json" } });
+      }
+    }
+
     const updates: Record<string, any> = { updated_at: new Date() };
-    if (body.name !== undefined) updates.name = body.name;
+    if (body.name !== undefined) updates.name = body.name.trim();
     if (body.bio !== undefined) updates.bio = body.bio || null;
     if (body.spotify_id !== undefined) updates.spotify_id = body.spotify_id || null;
     if (body.spotify_followers !== undefined) updates.spotify_followers = body.spotify_followers ? Number(body.spotify_followers) : null;
@@ -63,7 +70,25 @@ export const DELETE: APIRoute = async ({ request }) => {
     if (!body.id) {
       return new Response(JSON.stringify({ error: "ID is required" }), { status: 400, headers: { "Content-Type": "application/json" } });
     }
-    await db.delete(artists).where(eq(artists.id, body.id));
+
+    const id = body.id as string;
+
+    // Existence check
+    const rows = await db.select({ id: artists.id }).from(artists).where(eq(artists.id, id));
+    if (!rows.length) {
+      return new Response(JSON.stringify({ error: "Artist not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
+    }
+
+    // Block if the artist still has releases — safest policy (no silent data loss)
+    const releaseCount = await db.select({ count: sql<number>`count(*)` }).from(releases).where(eq(releases.artist_id, id));
+    const n = Number(releaseCount[0]?.count ?? 0);
+    if (n > 0) {
+      return new Response(JSON.stringify({
+        error: `Cannot delete artist with ${n} release${n > 1 ? "s" : ""} — reassign or delete those releases first.`
+      }), { status: 409, headers: { "Content-Type": "application/json" } });
+    }
+
+    await db.delete(artists).where(eq(artists.id, id));
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });
