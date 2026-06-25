@@ -11,7 +11,7 @@ export function TrackForm({ releaseId, works, onClose }: {
   const [position, setPosition] = useState("");
   const [version, setVersion] = useState("Main");
   const [audioUrl, setAudioUrl] = useState("");
-  const [mode, setMode] = useState<"existing" | "new">("existing");
+  const [mode, setMode] = useState<"auto" | "existing" | "new">("auto");
   const [workId, setWorkId] = useState("");
   const [newWorkTitle, setNewWorkTitle] = useState("");
   const [autoIsrc, setAutoIsrc] = useState(true);
@@ -24,11 +24,15 @@ export function TrackForm({ releaseId, works, onClose }: {
     setError("");
     try {
       const payload: Record<string, any> = {
-        title, release_id: releaseId,
+        title,
+        release_id: releaseId,
         position: position ? Number(position) : null,
-        version, audio_url: audioUrl || null,
+        version,
+        audio_url: audioUrl || null,
         auto_isrc: autoIsrc,
       };
+      // "auto" mode (default): send neither work_id nor new_work_title.
+      // The server will create a work from the track title automatically.
       if (mode === "existing" && workId) {
         payload.work_id = workId;
       } else if (mode === "new" && newWorkTitle) {
@@ -78,32 +82,45 @@ export function TrackForm({ releaseId, works, onClose }: {
       </div>
 
       <div className="border-t border-neutral-200 pt-4">
+        <p className="text-xs text-neutral-400 mb-2">
+          Leave blank to auto-create a work from the track title.
+        </p>
         <div className="flex gap-3 mb-3">
+          <button type="button" onClick={() => setMode("auto")}
+            className={`text-sm px-3 py-1.5 rounded-md ${mode === "auto" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-600"}`}>
+            Auto (use title)
+          </button>
           <button type="button" onClick={() => setMode("existing")}
             className={`text-sm px-3 py-1.5 rounded-md ${mode === "existing" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-600"}`}>
-            Link to existing work
+            Link to existing
           </button>
           <button type="button" onClick={() => setMode("new")}
             className={`text-sm px-3 py-1.5 rounded-md ${mode === "new" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-600"}`}>
             Create new work
           </button>
         </div>
-        {mode === "existing" ? (
+        {mode === "existing" && (
           <select value={workId} onChange={(e) => setWorkId(e.target.value)}
             className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900">
             <option value="">— Select work —</option>
             {works.map((w) => <option key={w.id} value={w.id}>{w.title} {w.isrc ? `(${w.isrc})` : ""}</option>)}
           </select>
-        ) : (
+        )}
+        {mode === "new" && (
           <input value={newWorkTitle} onChange={(e) => setNewWorkTitle(e.target.value)} placeholder="New work title"
             className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900" />
+        )}
+        {mode === "auto" && (
+          <p className="text-sm text-neutral-500 italic">
+            Work will be created as <strong>"{title || "(track title)"}"</strong> when you save.
+          </p>
         )}
       </div>
 
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={autoIsrc} onChange={(e) => setAutoIsrc(e.target.checked)}
           className="rounded border-neutral-300" />
-        Auto-generate ISRC
+        Auto-generate ISRC (applied to work, track inherits it)
       </label>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
