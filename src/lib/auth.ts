@@ -2,9 +2,12 @@ import "dotenv/config";
 import { betterAuth } from "better-auth";
 import { Pool } from "pg";
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || "postgres://postgres.supabase:***@100.92.149.28:6543/postgres",
-});
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error("DATABASE_URL environment variable is required. Set it in .env");
+}
+
+const pool = new Pool({ connectionString });
 
 export const auth = betterAuth({
   database: pool,

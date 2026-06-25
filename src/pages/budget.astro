@@ -1,9 +1,15 @@
 ---
 import AppLayout from "../layouts/AppLayout.astro";
-import { supabase } from "../lib/supabase";
+import { db } from "../lib/db";
+import { budget_line_items, releases } from "../db/schema";
+import { eq, desc } from "drizzle-orm";
 
-const { data: items } = await supabase.from("budget_line_items").select("id, name, amount, status, release_id, releases(title)").order("created_at", { ascending: false }).limit(50);
-const total = items?.reduce((sum, i) => sum + (i.amount ?? 0), 0) ?? 0;
+const itemRows = await db.select({
+  id: budget_line_items.id, name: budget_line_items.name, amount: budget_line_items.amount,
+  status: budget_line_items.status, release_title: releases.title,
+}).from(budget_line_items).leftJoin(releases, eq(budget_line_items.release_id, releases.id)).orderBy(desc(budget_line_items.created_at)).limit(50);
+
+const total = itemRows.reduce((sum, i) => sum + (i.amount ?? 0), 0);
 ---
 
 <AppLayout>
@@ -13,17 +19,17 @@ const total = items?.reduce((sum, i) => sum + (i.amount ?? 0), 0) ?? 0;
       <p class="text-2xl font-bold">${total.toLocaleString()}</p>
     </div>
 
-    {!items?.length ? (
+    {!itemRows.length ? (
       <div class="p-12 text-center text-neutral-400 border-2 border-dashed border-neutral-200 rounded-xl">
         <p class="text-lg">No budget items yet.</p>
       </div>
     ) : (
       <div class="bg-white border border-neutral-200 rounded-xl divide-y divide-neutral-100">
-        {items.map((i) => (
+        {itemRows.map((i) => (
           <div class="flex items-center justify-between p-4">
             <div>
               <p class="font-medium">{i.name}</p>
-              <p class="text-sm text-neutral-500">{i.releases?.title || "—"}</p>
+              <p class="text-sm text-neutral-500">{i.release_title || "—"}</p>
             </div>
             <div class="text-right">
               <p class="font-medium">${i.amount?.toLocaleString()}</p>

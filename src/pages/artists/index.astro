@@ -1,8 +1,10 @@
 ---
 import AppLayout from "../../layouts/AppLayout.astro";
-import { supabase } from "../../lib/supabase";
+import { db } from "../../lib/db";
+import { artists } from "../../db/schema";
+import { asc } from "drizzle-orm";
 
-const { data: artists } = await supabase.from("artists").select("id, name, pro, spotify_followers, bio").order("name");
+const artistRows = await db.select().from(artists).orderBy(asc(artists.name));
 ---
 
 <AppLayout>
@@ -12,13 +14,13 @@ const { data: artists } = await supabase.from("artists").select("id, name, pro, 
       <a href="/artists/new" class="inline-flex items-center px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors">+ New Artist</a>
     </div>
 
-    {!artists?.length ? (
+    {!artistRows.length ? (
       <div class="p-12 text-center text-neutral-400 border-2 border-dashed border-neutral-200 rounded-xl">
         <p class="text-lg">No artists yet.</p>
       </div>
     ) : (
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {artists.map((a) => (
+        {artistRows.map((a) => (
           <a href={`/artists/${a.id}`} class="block p-5 rounded-xl border border-neutral-200 hover:border-neutral-400 hover:shadow-sm transition-all">
             <h2 class="text-lg font-semibold">{a.name}</h2>
             <div class="mt-2 flex flex-wrap gap-2 text-xs">

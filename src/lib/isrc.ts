@@ -9,7 +9,9 @@
  *
  * Default prefix: DKO7P (True Nature Records)
  */
-import { supabaseAdmin } from "./supabase";
+import { db } from "./db";
+import { isrc_sequences, tracks, works } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 export async function generateISRC(
   year?: number,
@@ -18,34 +20,20 @@ export async function generateISRC(
   const y = year ?? new Date().getFullYear();
   const yearCode = String(y).slice(-2);
 
-  // Get or create the sequence for this year
-  const { data: existing } = await supabaseAdmin
-    .from("isrc_sequences")
-    .select("*")
-    .eq("year", y)
-    .single();
-
+  const existing = await db.select().from(isrc_sequences).where(eq(isrc_sequences.year, y));
   let nextNum: number;
   let sequenceId: string;
 
-  if (existing) {
-    nextNum = existing.last_production_number + 1;
-    sequenceId = existing.id;
-    await supabaseAdmin
-      .from("isrc_sequences")
-      .update({ last_production_number: nextNum })
-      .eq("id", sequenceId);
+  if (existing.length > 0) {
+    nextNum = (existing[0].last_production_number ?? 0) + 1;
+    sequenceId = existing[0].id;
+    await db.update(isrc_sequences).set({ last_production_number: nextNum }).where(eq(isrc_sequences.id, sequenceId));
   } else {
     nextNum = 1;
     sequenceId = crypto.randomUUID();
-    await supabaseAdmin
-      .from("isrc_sequences")
-      .insert({
-        id: sequenceId,
-        year: y,
-        last_production_number: nextNum,
-        prefix,
-      });
+    await db.insert(isrc_sequences).values({
+      id: sequenceId, year: y, last_production_number: nextNum, prefix,
+    });
   }
 
   const designation = String(nextNum).padStart(5, "0");
@@ -53,43 +41,26 @@ export async function generateISRC(
 }
 
 /**
- * Assign ISRCs to all tracks on a release that don"t have one.
- * Also assigns to the linked work if it doesn"t have one.
+ * Assign ISRCs to all tracks on a release that don't have one.
+ * Also assigns to the linked work if it doesn't have one.
  */
 export async function assignISRCsToRelease(releaseId: string): Promise<number> {
-  const { data: tracks } = await supabaseAdmin
-    .from("tracks")
-    .select("id, work_id, isrc")
-    .eq("release_id", releaseId);
-
-  if (!tracks?.length) return 0;
+  const trackRows = await db.select().from(tracks).where(eq(tracks.release_id, releaseId));
+  if (!trackRows.length) return 0;
 
   let assigned = 0;
-  for (const track of tracks) {
-    if (track.isrc) continue; // Already has one
+  for (const track of trackRows) {
+    if (track.isrc) continue;
 
     const isrc = await generateISRC();
-    await supabaseAdmin
-      .from("tracks")
-      .update({ isrc })
-      .eq("id", track.id);
+    await db.update(tracks).set({ isrc }).where(eq(tracks.id, track.id));
 
-    // Also assign to work if it doesn"t have an ISRC
     if (track.work_id) {
-      const { data: work } = await supabaseAdmin
-        .from("works")
-        .select("isrc")
-        .eq("id", track.work_id)
-        .single();
-
-      if (work && !work.isrc) {
-        await supabaseAdmin
-          .from("works")
-          .update({ isrc })
-          .eq("id", track.work_id);
+      const workRows = await db.select().from(works).where(eq(works.id, track.work_id));
+      if (workRows[0] && !workRows[0].isrc) {
+        await db.update(works).set({ isrc }).where(eq(works.id, track.work_id));
       }
     }
-
     assigned++;
   }
 

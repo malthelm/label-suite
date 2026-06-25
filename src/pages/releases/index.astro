@@ -1,8 +1,18 @@
 ---
 import AppLayout from "../../layouts/AppLayout.astro";
-import { supabase } from "../../lib/supabase";
+import { db } from "../../lib/db";
+import { releases, artists } from "../../db/schema";
+import { desc, eq } from "drizzle-orm";
 
-const { data: releases } = await supabase.from("releases").select("id, title, format, status, release_date, release_ready, release_missing, artists(name)").order("release_date", { ascending: false });
+const releaseRows = await db.select({
+  id: releases.id,
+  title: releases.title,
+  format: releases.format,
+  status: releases.status,
+  release_date: releases.release_date,
+  release_ready: releases.release_ready,
+  artist_name: artists.name,
+}).from(releases).leftJoin(artists, eq(releases.artist_id, artists.id)).orderBy(desc(releases.release_date));
 ---
 
 <AppLayout>
@@ -12,22 +22,18 @@ const { data: releases } = await supabase.from("releases").select("id, title, fo
       <a href="/releases/new" class="inline-flex items-center px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors">+ New Release</a>
     </div>
 
-    {!releases?.length ? (
+    {!releaseRows.length ? (
       <div class="p-12 text-center text-neutral-400 border-2 border-dashed border-neutral-200 rounded-xl">
         <p class="text-lg">No releases yet.</p>
       </div>
     ) : (
       <div class="bg-white border border-neutral-200 rounded-xl divide-y divide-neutral-100">
-        {releases.map((r) => (
+        {releaseRows.map((r) => (
           <a href={`/releases/${r.id}`} class="flex items-center justify-between p-4 hover:bg-neutral-50 transition-colors">
             <div>
               <p class="font-medium">{r.title}</p>
               <div class="flex gap-2 mt-1 text-xs text-neutral-500">
-                <span>{r.artists?.name}</span>
-                <span>·</span>
-                <span>{r.format}</span>
-                <span>·</span>
-                <span>{r.release_date || "No date"}</span>
+                <span>{r.artist_name}</span><span>·</span><span>{r.format}</span><span>·</span><span>{r.release_date || "No date"}</span>
               </div>
             </div>
             <span class={`text-xs px-2 py-1 rounded-md font-medium ${r.release_ready ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>

@@ -1,12 +1,22 @@
 ---
 import AppLayout from "../layouts/AppLayout.astro";
-import { supabase } from "../lib/supabase";
-
-const { data: calls } = await supabase.from("calls").select("id, title, start, notes, contacts(name), releases(title)").order("start", { ascending: true }).limit(20);
-const { data: bugs } = await supabase.from("bugs").select("id, title, description, priority, status").eq("status", "logged").order("priority").limit(10);
-const { data: blocked } = await supabase.from("releases").select("id, title, release_date, artists(name)").eq("release_ready", false).order("release_date");
+import { db } from "../lib/db";
+import { calls, bugs, releases, artists, contacts } from "../db/schema";
+import { eq, asc, desc, and } from "drizzle-orm";
 
 const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+
+const callRows = await db.select({
+  id: calls.id, title: calls.title, start: calls.start, notes: calls.notes,
+  contact_name: contacts.name, release_title: releases.title,
+}).from(calls).leftJoin(contacts, eq(calls.contact_id, contacts.id)).leftJoin(releases, eq(calls.release_id, releases.id)).orderBy(asc(calls.start)).limit(20);
+
+const bugRows = await db.select().from(bugs).where(eq(bugs.status, "logged")).orderBy(asc(bugs.priority)).limit(10);
+
+const blockedRows = await db.select({
+  id: releases.id, title: releases.title, release_date: releases.release_date,
+  artist_name: artists.name,
+}).from(releases).leftJoin(artists, eq(releases.artist_id, artists.id)).where(eq(releases.release_ready, false)).orderBy(asc(releases.release_date));
 ---
 
 <AppLayout>
@@ -17,40 +27,37 @@ const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Calls -->
       <section>
-        <h2 class="text-lg font-semibold mb-3">📞 Calls ({calls?.length || 0})</h2>
+        <h2 class="text-lg font-semibold mb-3">📞 Calls ({callRows.length})</h2>
         <div class="space-y-2">
-          {!calls?.length && <p class="text-sm text-neutral-400">No upcoming calls.</p>}
-          {calls?.map((c) => (
+          {!callRows.length && <p class="text-sm text-neutral-400">No upcoming calls.</p>}
+          {callRows.map((c) => (
             <div class="p-4 rounded-lg border border-neutral-200">
               <h3 class="font-medium text-sm">{c.title}</h3>
-              <p class="text-xs text-neutral-500 mt-1">{c.contacts?.name}{c.releases?.title ? ` — ${c.releases.title}` : ""}</p>
+              <p class="text-xs text-neutral-500 mt-1">{c.contact_name}{c.release_title ? ` — ${c.release_title}` : ""}</p>
               {c.start && <p class="text-xs text-neutral-400 mt-1">{new Date(c.start).toLocaleDateString()} · {new Date(c.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>}
             </div>
           ))}
         </div>
       </section>
 
-      <!-- Blocked -->
       <section>
-        <h2 class="text-lg font-semibold mb-3">⛔ Blocked ({blocked?.length || 0})</h2>
+        <h2 class="text-lg font-semibold mb-3">⛔ Blocked ({blockedRows.length})</h2>
         <div class="space-y-2">
-          {!blocked?.length && <p class="text-sm text-neutral-400">All clear! 🎉</p>}
-          {blocked?.map((r) => (
+          {!blockedRows.length && <p class="text-sm text-neutral-400">All clear! 🎉</p>}
+          {blockedRows.map((r) => (
             <a href={`/releases/${r.id}`} class="block p-4 rounded-lg border border-red-100 bg-red-50/50 hover:bg-red-50 transition-colors">
               <h3 class="font-medium text-sm">{r.title}</h3>
-              <p class="text-xs text-neutral-500 mt-1">{r.artists?.name} · {r.release_date || "No date"}</p>
+              <p class="text-xs text-neutral-500 mt-1">{r.artist_name} · {r.release_date || "No date"}</p>
             </a>
           ))}
         </div>
       </section>
 
-      <!-- Bugs -->
       <section>
-        <h2 class="text-lg font-semibold mb-3">🐛 Bugs ({bugs?.length || 0})</h2>
+        <h2 class="text-lg font-semibold mb-3">🐛 Bugs ({bugRows.length})</h2>
         <div class="space-y-2">
-          {bugs?.map((b) => (
+          {bugRows.map((b) => (
             <div class="p-4 rounded-lg border border-neutral-200">
               <div class="flex items-center gap-2">
                 <span class={`text-xs px-2 py-0.5 rounded font-medium ${b.priority === "P0" ? "bg-red-100 text-red-700" : b.priority === "P1" ? "bg-orange-100 text-orange-700" : "bg-neutral-100 text-neutral-600"}`}>{b.priority}</span>

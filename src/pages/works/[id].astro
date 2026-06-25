@@ -1,0 +1,65 @@
+---
+import AppLayout from "../../layouts/AppLayout.astro";
+import { db } from "../../lib/db";
+import { works, roles, tracks, contacts } from "../../db/schema";
+import { eq, asc } from "drizzle-orm";
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect("/works");
+
+const workRows = await db.select().from(works).where(eq(works.id, id));
+const work = workRows[0];
+const roleRows = await db.select({
+  id: roles.id, role: roles.role, scope: roles.scope,
+  ownership_type: roles.ownership_type, percent_share: roles.percent_share,
+  clearance_status: roles.clearance_status, contact_name: contacts.name,
+}).from(roles).leftJoin(contacts, eq(roles.contact_id, contacts.id)).where(eq(roles.work_id, id));
+const trackRows = await db.select().from(tracks).where(eq(tracks.work_id, id)).orderBy(asc(tracks.position));
+---
+
+<AppLayout>
+  {!work ? <p class="text-neutral-500">Work not found.</p> : (
+    <div class="space-y-8">
+      <div>
+        <h1 class="text-3xl font-bold tracking-tight">{work.title}</h1>
+        <p class="text-neutral-500 mt-1">{work.isrc || "No ISRC"} · {work.genre || "No genre"}</p>
+      </div>
+
+      <section>
+        <h2 class="text-lg font-semibold mb-3">Roles (Credits) — {roleRows.length}</h2>
+        <div class="bg-white border border-neutral-200 rounded-xl divide-y divide-neutral-100">
+          {roleRows.map((r) => (
+            <div class="flex items-center justify-between p-4">
+              <div>
+                <p class="font-medium">{r.role || "—"} — {r.contact_name || "Unknown"}</p>
+                <p class="text-sm text-neutral-500">{r.scope} · {r.ownership_type} · {r.percent_share}%</p>
+              </div>
+              <span class={`text-xs px-2 py-1 rounded-md ${r.clearance_status === "Signed" ? "bg-green-100 text-green-700" : r.clearance_status === "Pending" ? "bg-orange-100 text-orange-700" : "bg-neutral-100 text-neutral-600"}`}>
+                {r.clearance_status || "Unknown"}
+              </span>
+            </div>
+          ))}
+          {!roleRows.length && <p class="p-4 text-sm text-neutral-400">No roles yet.</p>}
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold mb-3">Tracks using this work — {trackRows.length}</h2>
+        <div class="bg-white border border-neutral-200 rounded-xl divide-y divide-neutral-100">
+          {trackRows.map((t) => (
+            <a href={`/releases/${t.release_id}`} class="flex items-center justify-between p-4 hover:bg-neutral-50 transition-colors">
+              <div>
+                <p class="font-medium">{t.title}</p>
+                <p class="text-sm text-neutral-500">{t.isrc || "No ISRC"}</p>
+              </div>
+              <span class={`text-xs px-2 py-1 rounded-md ${t.track_ready ? "bg-green-100 text-green-700" : "bg-neutral-100 text-neutral-600"}`}>
+                {t.track_ready ? "Ready" : `${Math.round((t.clearance_progress ?? 0) * 100)}%`}
+              </span>
+            </a>
+          ))}
+          {!trackRows.length && <p class="p-4 text-sm text-neutral-400">No tracks linked.</p>}
+        </div>
+      </section>
+    </div>
+  )}
+</AppLayout>

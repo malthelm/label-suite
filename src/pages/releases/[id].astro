@@ -1,15 +1,27 @@
 ---
 import AppLayout from "../../layouts/AppLayout.astro";
-import { supabase } from "../../lib/supabase";
-
-export async function getStaticPaths() {
-  const { data } = await supabase.from("releases").select("id");
-  return (data ?? []).map((r: { id: string }) => ({ params: { id: r.id } }));
-}
+import { db } from "../../lib/db";
+import { releases, artists, tracks } from "../../db/schema";
+import { eq, asc } from "drizzle-orm";
 
 const { id } = Astro.params;
-const { data: release } = await supabase.from("releases").select("*, artists(name)").eq("id", id).single();
-const { data: tracks } = await supabase.from("tracks").select("id, title, position, version, isrc, audio_url, clearance_progress, track_ready").eq("release_id", id).order("position");
+if (!id) return Astro.redirect("/releases");
+
+const releaseRows = await db.select({
+  id: releases.id,
+  title: releases.title,
+  format: releases.format,
+  release_date: releases.release_date,
+  upc_ean: releases.upc_ean,
+  cover_art_url: releases.cover_art_url,
+  release_ready: releases.release_ready,
+  release_missing: releases.release_missing,
+  status: releases.status,
+  artist_name: artists.name,
+}).from(releases).leftJoin(artists, eq(releases.artist_id, artists.id)).where(eq(releases.id, id));
+
+const release = releaseRows[0];
+const trackRows = await db.select().from(tracks).where(eq(tracks.release_id, id)).orderBy(asc(tracks.position));
 ---
 
 <AppLayout>
@@ -22,14 +34,19 @@ const { data: tracks } = await supabase.from("tracks").select("id, title, positi
             {release.release_ready ? "Ready" : "Not Ready"}
           </span>
         </div>
-        <p class="text-neutral-500 mt-1">{release.artists?.name} · {release.format} · {release.release_date || "No date"}</p>
+        <p class="text-neutral-500 mt-1">{release.artist_name} · {release.format} · {release.release_date || "No date"}</p>
       </div>
 
-      <!-- Tracks -->
+      {release.release_missing && (
+        <div class="p-4 rounded-lg bg-red-50 border border-red-100">
+          <p class="text-sm font-medium text-red-800">Missing: {release.release_missing}</p>
+        </div>
+      )}
+
       <section>
-        <h2 class="text-lg font-semibold mb-3">Tracks ({tracks?.length ?? 0})</h2>
+        <h2 class="text-lg font-semibold mb-3">Tracks ({trackRows.length})</h2>
         <div class="space-y-1">
-          {tracks?.map((t) => (
+          {trackRows.map((t) => (
             <div class="flex items-center justify-between p-3 border border-neutral-200 rounded-lg">
               <div>
                 <p class="font-medium text-sm">{t.position}. {t.title} {t.version && t.version !== "Main" ? `(${t.version})` : ""}</p>

@@ -1,15 +1,15 @@
 ---
 import AppLayout from "../../layouts/AppLayout.astro";
-import { supabase } from "../../lib/supabase";
-
-export async function getStaticPaths() {
-  const { data } = await supabase.from("artists").select("id");
-  return (data ?? []).map((a: { id: string }) => ({ params: { id: a.id } }));
-}
+import { db } from "../../lib/db";
+import { artists, releases } from "../../db/schema";
+import { eq } from "drizzle-orm";
 
 const { id } = Astro.params;
-const { data: artist } = await supabase.from("artists").select("*").eq("id", id).single();
-const { data: releases } = await supabase.from("releases").select("id, title, format, status, release_date, release_ready").eq("artist_id", id);
+if (!id) return Astro.redirect("/artists");
+
+const artistRows = await db.select().from(artists).where(eq(artists.id, id));
+const artist = artistRows[0];
+const releaseRows = await db.select().from(releases).where(eq(releases.artist_id, id));
 ---
 
 <AppLayout>
@@ -26,9 +26,9 @@ const { data: releases } = await supabase.from("releases").select("id, title, fo
       {artist.bio && <p class="text-neutral-600 max-w-2xl">{artist.bio}</p>}
 
       <section>
-        <h2 class="text-lg font-semibold mb-3">Releases ({releases?.length ?? 0})</h2>
+        <h2 class="text-lg font-semibold mb-3">Releases ({releaseRows.length})</h2>
         <div class="space-y-2">
-          {releases?.map((r) => (
+          {releaseRows.map((r) => (
             <a href={`/releases/${r.id}`} class="flex items-center justify-between p-4 border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors">
               <div>
                 <p class="font-medium">{r.title}</p>
