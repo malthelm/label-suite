@@ -1,4 +1,4 @@
-import { pgTable, text, integer, real, timestamp, boolean, jsonb, pgSchema } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, timestamp, boolean, jsonb, pgSchema, date } from "drizzle-orm/pg-core";
 
 // All tables in label_suite schema (keeps separation from techrider's public schema)
 const schema = pgSchema("label_suite");
@@ -163,4 +163,117 @@ export const isrc_sequences = schema.table("isrc_sequences", {
   year: integer("year").notNull().unique(),
   last_production_number: integer("last_production_number").default(0),
   prefix: text("prefix").default("DKO7P"), // DK registrant code
+});
+
+// ─── Campaigns ──────────────────────────────────────────
+export const campaigns = schema.table("campaigns", {
+  id: text("id").primaryKey(),
+  campaign_name: text("campaign_name").notNull(),
+  linked_release_id: text("linked_release_id").references(() => releases.id),
+  linked_artist_id: text("linked_artist_id").references(() => artists.id),
+  campaign_type: text("campaign_type"),
+  start_date: text("start_date"),
+  end_date: text("end_date"),
+  status: text("status").default("planning"),
+  owner: text("owner"),
+  goal: text("goal"),
+  budget_planned: real("budget_planned"),
+  budget_actual: real("budget_actual"),
+  kpi_summary: text("kpi_summary"),
+  notes: text("notes"),
+  performance_rating: integer("performance_rating"),
+  main_platform: text("main_platform"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// ─── Radio Stations ─────────────────────────────────────
+export const radio_stations = schema.table("radio_stations", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  call_sign: text("call_sign"),
+  frequency: text("frequency"),
+  city: text("city"),
+  state: text("state"),
+  country: text("country"),
+  email: text("email"),
+  phone: text("phone"),
+  website: text("website"),
+  dj_name: text("dj_name"),
+  tier: text("tier"),
+  notes: text("notes"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// ─── Campaign Stations (join table) ─────────────────────
+export const campaign_stations = schema.table("campaign_stations", {
+  id: text("id").primaryKey(),
+  campaign_id: text("campaign_id").references(() => campaigns.id),
+  station_id: text("station_id").references(() => radio_stations.id),
+  status: text("status").default("pending"),
+});
+
+// ─── Media Assets ───────────────────────────────────────
+export const media_assets = schema.table("media_assets", {
+  id: text("id").primaryKey(),
+  asset_name: text("asset_name").notNull(),
+  asset_type: text("asset_type"),
+  linked_artist_id: text("linked_artist_id").references(() => artists.id),
+  linked_release_id: text("linked_release_id").references(() => releases.id),
+  version: text("version"),
+  approval_status: text("approval_status").default("pending"),
+  delivery_status: text("delivery_status").default("not_sent"),
+  file_link: text("file_link"),
+  notes: text("notes"),
+  date_uploaded: date("date_uploaded"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// ─── Documents ─────────────────────────────────────────
+export const documents = schema.table("documents", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  doc_type: text("doc_type"),
+  release_id: text("release_id").references(() => releases.id),
+  artist_id: text("artist_id").references(() => artists.id),
+  contact_id: text("contact_id").references(() => contacts.id),
+  status: text("status").default("draft"),
+  file_link: text("file_link"),
+  notes: text("notes"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// ─── Side Artists ──────────────────────────────────────
+export const side_artists = schema.table("side_artists", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  artist_id: text("artist_id").references(() => artists.id),
+  release_id: text("release_id").references(() => releases.id),
+  type: text("type"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+// ─── Royalties / Revenue ────────────────────────────────
+export const royalties_revenue = schema.table("royalties_revenue", {
+  id: text("id").primaryKey(),
+  record_name: text("record_name").notNull(),
+  statement_period: text("statement_period"),
+  source: text("source"),
+  artist_id: text("artist_id").references(() => artists.id),
+  release_id: text("release_id").references(() => releases.id),
+  gross_revenue: real("gross_revenue"),
+  costs: real("costs"),
+  net_revenue: real("net_revenue"),
+  paid_out: text("paid_out").default("unpaid"),
+  payment_date: text("payment_date"),
+  notes: text("notes"),
+  revenue_type: text("revenue_type"),
+  revenue_month: text("revenue_month"),
+  source_contact_id: text("source_contact_id").references(() => contacts.id),
+  payment_method: text("payment_method"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });

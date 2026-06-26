@@ -1,14 +1,22 @@
 ---
 import AppLayout from "../layouts/AppLayout.astro";
 import { db } from "../lib/db";
-import { artists, releases, bugs } from "../db/schema";
-import { count, eq } from "drizzle-orm";
+import { artists, releases, bugs, royalties_revenue } from "../db/schema";
+import { count, eq, sql } from "drizzle-orm";
 
 const artistCount = await db.select({ value: count() }).from(artists);
 const releaseRows = await db.select().from(releases);
 const bugCount = await db.select({ value: count() }).from(bugs).where(eq(bugs.status, "logged"));
 const readyCount = releaseRows.filter(r => r.release_ready).length;
 const artistRows = await db.select().from(artists).orderBy(artists.name);
+
+// Royalty summary
+const royaltySummary = await db.select({
+  total_net: sql<number>`coalesce(sum(${royalties_revenue.net_revenue}), 0)`,
+  unpaid_count: sql<number>`coalesce(sum(case when ${royalties_revenue.paid_out} = 'unpaid' then 1 else 0 end), 0)`,
+}).from(royalties_revenue);
+const totalNetRevenue = royaltySummary[0]?.total_net ?? 0;
+const unpaidStatements = royaltySummary[0]?.unpaid_count ?? 0;
 ---
 
 <AppLayout>
@@ -34,6 +42,18 @@ const artistRows = await db.select().from(artists).orderBy(artists.name);
       <div class="bg-card border border-border rounded-xl p-5">
         <p class="text-sm text-muted-foreground">Ready</p>
         <p class="text-3xl font-bold mt-1">{readyCount}/{releaseRows.length}</p>
+      </div>
+    </div>
+
+    <!-- Revenue Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-card border border-border rounded-xl p-5">
+        <p class="text-sm text-muted-foreground">Total Net Revenue</p>
+        <p class="text-3xl font-bold mt-1">${Number(totalNetRevenue).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+      </div>
+      <div class="bg-card border border-border rounded-xl p-5">
+        <p class="text-sm text-muted-foreground">Unpaid Statements</p>
+        <p class="text-3xl font-bold mt-1">{unpaidStatements}</p>
       </div>
     </div>
 

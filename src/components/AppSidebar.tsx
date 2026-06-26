@@ -20,15 +20,27 @@ import {
   DollarSign,
   Music,
   ContactRound,
+  Megaphone,
+  Radio,
+  Banknote,
+  CheckSquare,
+  Image,
+  FileText,
 } from "lucide-react";
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Today Hub", url: "/today", icon: CalendarDays },
+  { title: "Ops Tasks", url: "/ops-tasks", icon: CheckSquare },
   { title: "Artists", url: "/artists", icon: Users },
   { title: "Releases", url: "/releases", icon: Disc3 },
   { title: "Works", url: "/works", icon: Music },
   { title: "Contacts", url: "/contacts", icon: ContactRound },
+  { title: "Campaigns", url: "/campaigns", icon: Megaphone },
+  { title: "Radio Stations", url: "/radio-stations", icon: Radio },
+  { title: "Royalties", url: "/royalties", icon: Banknote },
+  { title: "Media Assets", url: "/media-assets", icon: Image },
+  { title: "Documents", url: "/documents", icon: FileText },
   { title: "Budget", url: "/budget", icon: DollarSign },
 ];
 
