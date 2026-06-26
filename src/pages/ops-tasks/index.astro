@@ -1,0 +1,32 @@
+---
+import AppLayout from "../../layouts/AppLayout.astro";
+import { db } from "../../lib/db";
+import { ops_tasks, artists, releases } from "../../db/schema";
+import { eq, asc } from "drizzle-orm";
+import { OpsTaskManager } from "../../components/ops-tasks/OpsTaskManager";
+import type { OpsTask } from "../../components/ops-tasks/OpsTaskForm";
+
+const taskRows = await db.select({
+  id: ops_tasks.id, task_name: ops_tasks.task_name, status: ops_tasks.status,
+  priority: ops_tasks.priority, owner: ops_tasks.owner, due_date: ops_tasks.due_date,
+  linked_artist_id: ops_tasks.linked_artist_id, linked_release_id: ops_tasks.linked_release_id,
+  notes: ops_tasks.notes, next_action: ops_tasks.next_action,
+  artist_name: artists.name, release_title: releases.title,
+}).from(ops_tasks)
+  .leftJoin(artists, eq(ops_tasks.linked_artist_id, artists.id))
+  .leftJoin(releases, eq(ops_tasks.linked_release_id, releases.id))
+  .orderBy(asc(ops_tasks.priority));
+
+const artistRows = await db.select({ id: artists.id, name: artists.name }).from(artists).orderBy(asc(artists.name));
+const releaseRows = await db.select({ id: releases.id, title: releases.title }).from(releases).orderBy(asc(releases.title));
+---
+
+<AppLayout>
+  <div class="space-y-6">
+    <div>
+      <h1 class="text-3xl font-bold tracking-tight">Ops Tasks</h1>
+      <p class="text-muted-foreground mt-1">General to-do layer — anything not tracked elsewhere.</p>
+    </div>
+    <OpsTaskManager client:load initialTasks={taskRows as Array<OpsTask & { id: string; artist_name?: string | null; release_title?: string | null }>} artists={artistRows} releases={releaseRows} />
+  </div>
+</AppLayout>

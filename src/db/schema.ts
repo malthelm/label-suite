@@ -277,3 +277,20 @@ export const royalties_revenue = schema.table("royalties_revenue", {
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
+
+// ─── Ops Tasks ─────────────────────────────────────────
+export const ops_tasks = schema.table("ops_tasks", {
+  id: text("id").primaryKey(),
+  task_name: text("task_name").notNull(),
+  status: text("status").default("todo"),
+  priority: text("priority").default("P2"),
+  owner: text("owner"),
+  due_date: date("due_date"),
+  linked_artist_id: text("linked_artist_id").references(() => artists.id),
+  linked_release_id: text("linked_release_id").references(() => releases.id),
+  notes: text("notes"),
+  next_action: text("next_action"),
+  is_overdue: boolean("is_overdue").default(false),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});

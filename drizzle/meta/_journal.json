@@ -36,6 +36,13 @@
       "when": 1782487699635,
       "tag": "0004_messy_wrecker",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782494770073,
+      "tag": "0005_optimal_night_thrasher",
+      "breakpoints": true
     }
   ]
 }
