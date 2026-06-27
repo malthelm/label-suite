@@ -142,13 +142,10 @@ export function RadioStationForm({
         <select value={tier} onChange={(e) => setTier(e.target.value)}
           className="w-full px-3 py-2 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring">
           <option value="">— Select —</option>
-          <option value="college">College</option>
-          <option value="community">Community</option>
-          <option value="public">Public</option>
-          <option value="commercial">Commercial</option>
-          <option value="satellite">Satellite</option>
-          <option value="internet">Internet</option>
-          <option value="premium">Premium</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
         </select>
       </div>
       <div>

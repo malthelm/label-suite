@@ -3,6 +3,8 @@ import AppLayout from "../../layouts/AppLayout.astro";
 import { db } from "../../lib/db";
 import { radio_stations } from "../../db/schema";
 import { asc } from "drizzle-orm";
+import { RadioStationManager } from "../../components/radio-stations/RadioStationManager";
+import type { RadioStation } from "../../components/radio-stations/RadioStationForm";
 
 const stationRows = await db.select().from(radio_stations).orderBy(asc(radio_stations.name));
 ---
@@ -13,29 +15,8 @@ const stationRows = await db.select().from(radio_stations).orderBy(asc(radio_sta
       <h1 class="text-3xl font-bold tracking-tight">Radio Stations</h1>
       <p class="text-muted-foreground mt-1">Radio promo CRM — stations, DJs, and contact info.</p>
     </div>
-
-    {!stationRows.length ? (
-      <div class="p-12 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
-        <p class="text-lg">No radio stations yet.</p>
-      </div>
-    ) : (
-      <div class="bg-card border border-border rounded-xl divide-y divide-border">
-        {stationRows.map((s) => (
-          <div class="flex items-center justify-between p-4">
-            <div>
-              <p class="font-medium">{s.name}</p>
-              <p class="text-sm text-muted-foreground">
-                {s.city || ""} {s.country || ""} · {s.frequency || ""} · {s.dj_name || ""}
-              </p>
-              {s.email && <a href={`mailto:${s.email}`} class="text-xs text-blue-600 hover:underline">{s.email}</a>}
-            </div>
-            <div class="flex gap-2">
-              {s.tier && <span class="text-xs px-2 py-1 rounded bg-muted">{s.tier}</span>}
-              {s.website && <a href={s.website} class="text-xs text-blue-600 hover:underline" target="_blank" rel="noopener">Website →</a>}
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
+    <RadioStationManager client:load
+      initialStations={stationRows as Array<RadioStation>}
+    />
   </div>
 </AppLayout>

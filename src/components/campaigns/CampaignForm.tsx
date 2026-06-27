@@ -103,13 +103,9 @@ export function CampaignForm({
           <select value={campaignType} onChange={(e) => setCampaignType(e.target.value)}
             className="w-full px-3 py-2 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring">
             <option value="">— Select —</option>
-            <option value="digital">Digital</option>
-            <option value="radio">Radio</option>
-            <option value="tv">TV</option>
-            <option value="print">Print</option>
-            <option value="social">Social Media</option>
-            <option value="event">Event</option>
-            <option value="other">Other</option>
+            <option value="pre-release">Pre-release</option>
+            <option value="release">Release</option>
+            <option value="sustain">Sustain</option>
           </select>
         </div>
         <div>
@@ -118,9 +114,7 @@ export function CampaignForm({
             className="w-full px-3 py-2 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring">
             <option value="planning">Planning</option>
             <option value="active">Active</option>
-            <option value="paused">Paused</option>
-            <option value="completed">Completed</option>
-            <option value="archived">Archived</option>
+            <option value="done">Done</option>
           </select>
         </div>
       </div>
@@ -162,8 +156,15 @@ export function CampaignForm({
         </div>
         <div>
           <label className="block text-sm font-medium text-foreground mb-1">Main Platform</label>
-          <input value={mainPlatform} onChange={(e) => setMainPlatform(e.target.value)} placeholder="Spotify, Instagram..."
-            className="w-full px-3 py-2 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+          <select value={mainPlatform} onChange={(e) => setMainPlatform(e.target.value)}
+            className="w-full px-3 py-2 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+            <option value="">— Select —</option>
+            <option value="Spotify">Spotify</option>
+            <option value="Apple Music">Apple Music</option>
+            <option value="TikTok">TikTok</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Radio">Radio</option>
+          </select>
         </div>
       </div>
       <div>

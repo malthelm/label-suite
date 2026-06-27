@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 
-const SOURCE_OPTIONS = ["Spotify", "Apple Music", "Tidal", "CD Baby", "DistroKid", "Other"];
+const SOURCE_OPTIONS = ["Spotify", "Apple Music", "Tidal", "CD Baby", "DistroKid", "AWAL", "Other"];
 
 const PAID_OUT_OPTIONS = ["unpaid", "pending", "paid"];
+
+const REVENUE_TYPE_OPTIONS = ["streaming", "mechanical", "sync", "physical"];
 
 export interface RoyaltyRecord {
   id: string;
@@ -46,6 +48,7 @@ export function RoyaltyForm({
   const [costs, setCosts] = useState(initial?.costs?.toString() || "");
   const [paidOut, setPaidOut] = useState(initial?.paid_out || "unpaid");
   const [paymentDate, setPaymentDate] = useState(initial?.payment_date || "");
+  const [revenueType, setRevenueType] = useState(initial?.revenue_type || "");
   const [notes, setNotes] = useState(initial?.notes || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -65,6 +68,7 @@ export function RoyaltyForm({
         costs: costs ? Number(costs) : null,
         paid_out: paidOut,
         payment_date: paymentDate || null,
+        revenue_type: revenueType || null,
         notes: notes || null,
       };
       const res = await fetch("/api/royalties", {
@@ -193,6 +197,22 @@ export function RoyaltyForm({
             className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
           />
         </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-1">Revenue Type</label>
+          <select
+            value={revenueType}
+            onChange={(e) => setRevenueType(e.target.value)}
+            className="w-full px-3 py-2 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+          >
+            <option value="">— Select —</option>
+            {REVENUE_TYPE_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
+            ))}
+          </select>
+        </div>
+        <div></div>
       </div>
       <div>
         <label className="block text-sm font-medium text-neutral-700 mb-1">Notes</label>

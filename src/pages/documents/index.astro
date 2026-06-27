@@ -2,16 +2,23 @@
 import AppLayout from "../../layouts/AppLayout.astro";
 import { db } from "../../lib/db";
 import { documents, artists, releases, contacts } from "../../db/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, asc } from "drizzle-orm";
+import { DocumentManager } from "../../components/documents/DocumentManager";
+import type { Document } from "../../components/documents/DocumentForm";
 
 const docRows = await db.select({
   id: documents.id, name: documents.name, doc_type: documents.doc_type,
+  release_id: documents.release_id, artist_id: documents.artist_id, contact_id: documents.contact_id,
   status: documents.status, file_link: documents.file_link, notes: documents.notes,
   artist_name: artists.name, release_title: releases.title, contact_name: contacts.name,
 }).from(documents).leftJoin(artists, eq(documents.artist_id, artists.id))
   .leftJoin(releases, eq(documents.release_id, releases.id))
   .leftJoin(contacts, eq(documents.contact_id, contacts.id))
   .orderBy(desc(documents.created_at)).limit(50);
+
+const artistRows = await db.select({ id: artists.id, name: artists.name }).from(artists).orderBy(asc(artists.name));
+const releaseRows = await db.select({ id: releases.id, title: releases.title }).from(releases).orderBy(asc(releases.title));
+const contactRows = await db.select({ id: contacts.id, name: contacts.name }).from(contacts).orderBy(asc(contacts.name));
 ---
 
 <AppLayout>
@@ -20,26 +27,11 @@ const docRows = await db.select({
       <h1 class="text-3xl font-bold tracking-tight">Documents</h1>
       <p class="text-muted-foreground mt-1">Contracts, licenses, split sheets, and legal docs.</p>
     </div>
-
-    {!docRows.length ? (
-      <div class="p-12 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
-        <p class="text-lg">No documents yet.</p>
-      </div>
-    ) : (
-      <div class="bg-card border border-border rounded-xl divide-y divide-border">
-        {docRows.map((d) => (
-          <div class="flex items-center justify-between p-4">
-            <div>
-              <p class="font-medium">{d.name}</p>
-              <p class="text-sm text-muted-foreground">
-                {d.doc_type || "—"} · {d.artist_name || "—"} · {d.release_title || "—"} · {d.contact_name || "—"}
-              </p>
-              {d.file_link && <a href={d.file_link} class="text-xs text-blue-600 hover:underline" target="_blank" rel="noopener">Open →</a>}
-            </div>
-            <span class={`text-xs px-2 py-1 rounded ${d.status === "signed" ? "bg-green-100 text-green-700" : d.status === "sent" ? "bg-blue-100 text-blue-700" : d.status === "expired" ? "bg-red-100 text-red-700" : "bg-muted text-muted-foreground"}`}>{d.status}</span>
-          </div>
-        ))}
-      </div>
-    )}
+    <DocumentManager client:load
+      initialDocuments={docRows as Array<Document & { artist_name?: string | null; release_title?: string | null; contact_name?: string | null }>}
+      artists={artistRows}
+      releases={releaseRows}
+      contacts={contactRows}
+    />
   </div>
 </AppLayout>
