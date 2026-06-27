@@ -1,8 +1,8 @@
 ---
 import AppLayout from "../layouts/AppLayout.astro";
 import { db } from "../lib/db";
-import { calls, bugs, releases, artists, contacts } from "../db/schema";
-import { eq, asc, desc, and } from "drizzle-orm";
+import { calls, bugs, releases, artists, contacts, ops_tasks } from "../db/schema";
+import { eq, asc, desc, and, count } from "drizzle-orm";
 import { BugInbox } from "../components/BugInbox";
 
 const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
@@ -18,6 +18,10 @@ const blockedRows = await db.select({
   id: releases.id, title: releases.title, release_date: releases.release_date,
   artist_name: artists.name,
 }).from(releases).leftJoin(artists, eq(releases.artist_id, artists.id)).where(eq(releases.release_ready, false)).orderBy(asc(releases.release_date));
+
+const taskRows = await db.select().from(ops_tasks).where(eq(ops_tasks.status, "in_progress")).orderBy(asc(ops_tasks.priority)).limit(3);
+const blockedCount = await db.select({ value: count() }).from(ops_tasks).where(eq(ops_tasks.status, "blocked"));
+const overdueCount = await db.select({ value: count() }).from(ops_tasks).where(and(eq(ops_tasks.is_overdue, true), eq(ops_tasks.status, "in_progress")));
 ---
 
 <AppLayout>
@@ -28,6 +32,27 @@ const blockedRows = await db.select({
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <section>
+        <h2 class="text-lg font-semibold mb-3">✅ Top Tasks</h2>
+        <div class="space-y-2">
+          {!taskRows.length && <p class="text-sm text-muted-foreground">No tasks in progress.</p>}
+          {taskRows.map((t) => (
+            <a href="/ops-tasks" class="block p-4 rounded-lg border border-border hover:bg-accent transition-colors">
+              <h3 class="font-medium text-sm">{t.task_name}</h3>
+              <p class="text-xs text-muted-foreground mt-1">
+                {t.owner || "Unassigned"} · <span class={`font-medium ${t.priority === "P0" ? "text-red-600" : t.priority === "P1" ? "text-orange-600" : ""}`}>{t.priority}</span>
+                {t.due_date && ` · ${t.due_date}`}
+              </p>
+            </a>
+          ))}
+        </div>
+        {(blockedCount[0]?.value ?? 0) > 0 && (
+          <a href="/ops-tasks" class="text-xs text-red-600 mt-1 inline-block">🚫 {blockedCount[0]?.value} blocked</a>
+        )}
+        {(overdueCount[0]?.value ?? 0) > 0 && (
+          <a href="/ops-tasks" class="text-xs text-red-600 mt-1 inline-block ml-2">⚠️ {overdueCount[0]?.value} overdue</a>
+        )}
+      </section>
       <section>
         <h2 class="text-lg font-semibold mb-3">📞 Calls ({callRows.length})</h2>
         <div class="space-y-2">

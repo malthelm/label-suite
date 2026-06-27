@@ -1,7 +1,7 @@
 ---
 import AppLayout from "../layouts/AppLayout.astro";
 import { db } from "../lib/db";
-import { artists, releases, bugs, royalties_revenue } from "../db/schema";
+import { artists, releases, bugs, royalties_revenue, ops_tasks } from "../db/schema";
 import { count, eq, sql } from "drizzle-orm";
 
 const artistCount = await db.select({ value: count() }).from(artists);
@@ -17,6 +17,11 @@ const royaltySummary = await db.select({
 }).from(royalties_revenue);
 const totalNetRevenue = royaltySummary[0]?.total_net ?? 0;
 const unpaidStatements = royaltySummary[0]?.unpaid_count ?? 0;
+
+// Ops Tasks summary
+const openTaskCount = await db.select({ value: count() }).from(ops_tasks).where(eq(ops_tasks.status, "todo"));
+const inProgressCount = await db.select({ value: count() }).from(ops_tasks).where(eq(ops_tasks.status, "in_progress"));
+const blockedTaskCount = await db.select({ value: count() }).from(ops_tasks).where(eq(ops_tasks.status, "blocked"));
 ---
 
 <AppLayout>
@@ -45,15 +50,24 @@ const unpaidStatements = royaltySummary[0]?.unpaid_count ?? 0;
       </div>
     </div>
 
-    <!-- Revenue Summary -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Revenue + Ops Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="bg-card border border-border rounded-xl p-5">
         <p class="text-sm text-muted-foreground">Total Net Revenue</p>
-        <p class="text-3xl font-bold mt-1">${Number(totalNetRevenue).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        <p class="text-3xl font-bold mt-1">{Number(totalNetRevenue).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr</p>
       </div>
       <div class="bg-card border border-border rounded-xl p-5">
         <p class="text-sm text-muted-foreground">Unpaid Statements</p>
         <p class="text-3xl font-bold mt-1">{unpaidStatements}</p>
+      </div>
+      <div class="bg-card border border-border rounded-xl p-5">
+        <p class="text-sm text-muted-foreground">Ops Tasks</p>
+        <p class="text-3xl font-bold mt-1">{inProgressCount[0]?.value ?? 0}<span class="text-base font-normal text-muted-foreground"> in progress</span></p>
+        <p class="text-xs text-muted-foreground mt-1">{openTaskCount[0]?.value ?? 0} open · {blockedTaskCount[0]?.value ?? 0} blocked</p>
+      </div>
+      <div class="bg-card border border-border rounded-xl p-5">
+        <p class="text-sm text-muted-foreground">Ready</p>
+        <p class="text-3xl font-bold mt-1">{readyCount}/{releaseRows.length}</p>
       </div>
     </div>
 
